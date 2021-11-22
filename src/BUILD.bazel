@@ -1,6 +1,10 @@
+#package(default_visibility = ["//src:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
+
 java_library(
     name = "functional_java",
     srcs = [
         "main/java/com/functional/Function.java",
+        "main/java/com/functional/Tuple.java",
     ],
 )
