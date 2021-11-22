@@ -1,0 +1,6 @@
+java_library(
+    name = "functional_java",
+    srcs = [
+        "main/java/com/functional/Function.java",
+    ],
+)
