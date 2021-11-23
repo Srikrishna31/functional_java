@@ -1,5 +1,9 @@
 package com.functional;
 
+/**
+ * A functional interface encapsulating a computation, which transforms a type T to type U.
+ * Also provides utilities to compose functions, and curried versions of them.
+ */
 public interface Function<T,U> {
     U apply(T arg);
 

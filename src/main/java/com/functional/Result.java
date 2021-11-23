@@ -1,4 +1,4 @@
-package src.main.java.com.functional;
+package com.functional;
 
 /**
  * This class handles the results of a computation, and allows to bind further
@@ -13,10 +13,22 @@ public interface Result<T> {
      */
     void bind(Effect<T> success, Effect<String> failure);
 
+    /**
+     * This method returns a failure instance holding the message provided.
+     * @param message : Error message describing the condition.
+     * @param <T>: Type parameter which represent the Success type, although not used here.
+     * @return a Failure<T> object.
+     */
     static <T> Result<T> failure(String message) {
         return new Failure<>(message);
     }
 
+    /**
+     * This method returns a Success instance holding the value provided.
+     * @param value: Value representing successful computation.
+     * @param <T>: The type parameter of the success value.
+     * @return a Success<T> object.
+     */
     static <T> Result<T> success(T value) {
         return new Success<>(value);
     }

@@ -1,4 +1,4 @@
-package src.main.java.com.functional;
+package com.functional;
 
 /**
  * This class encapsulates a side effect which can be applied to a computation.

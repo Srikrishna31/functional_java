@@ -8,5 +8,17 @@ java_library(
         "main/java/com/functional/Function.java",
         "main/java/com/functional/Result.java",
         "main/java/com/functional/Tuple.java",
+        "main/java/com/functional/Case.java"
     ],
+)
+
+java_test(
+    name = "test_functional_java",
+    srcs = [
+        "test/java/com/functional/CaseTest.java"
+    ],
+    deps = [
+        ":functional_java"
+    ],
+    test_class = "com.functional.CaseTest"
 )
