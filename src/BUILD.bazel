@@ -4,7 +4,9 @@ package(default_visibility = ["//visibility:public"])
 java_library(
     name = "functional_java",
     srcs = [
+        "main/java/com/functional/Effect.java",
         "main/java/com/functional/Function.java",
+        "main/java/com/functional/Result.java",
         "main/java/com/functional/Tuple.java",
     ],
 )
