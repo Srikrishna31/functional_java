@@ -3,9 +3,11 @@ alias(
     actual = "//src:functional_java",
 )
 
-test_suite (
+test_suite(
     name = "test_functional_java",
     tests = [
-        "//src:test_functional_java",
-        ]
+        "//src:test_case",
+        "//src:test_executable",
+        "//src:test_list",
+    ],
 )

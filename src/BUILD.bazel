@@ -4,21 +4,60 @@ package(default_visibility = ["//visibility:public"])
 java_library(
     name = "functional_java",
     srcs = [
+        "main/java/com/functional/Case.java",
+        "main/java/com/functional/Effect.java",
+        "main/java/com/functional/Executable.java",
+        "main/java/com/functional/Function.java",
+        "main/java/com/functional/Result.java",
+        "main/java/com/functional/Tuple.java",
+        "main/java/com/util/CollectionUtilities.java",
+        "main/java/com/util/List.java",
+    ],
+)
+
+java_binary(
+    name = "functional_java_bin",
+    srcs = [
+        "main/java/com/functional/Case.java",
         "main/java/com/functional/Effect.java",
         "main/java/com/functional/Function.java",
         "main/java/com/functional/Result.java",
         "main/java/com/functional/Tuple.java",
-        "main/java/com/functional/Case.java"
+        "main/java/com/util/CollectionUtilities.java",
+        "main/java/com/util/List.java",
+    ],
+    main_class = "com.util.List",
+)
+
+java_test(
+    name = "test_case",
+    srcs = [
+        "test/java/com/functional/CaseTest.java",
+    ],
+    test_class = "com.functional.CaseTest",
+    deps = [
+        ":functional_java",
     ],
 )
 
 java_test(
-    name = "test_functional_java",
+    name = "test_list",
     srcs = [
-        "test/java/com/functional/CaseTest.java"
+        "test/java/com/util/ListTest.java",
     ],
+    test_class = "com.util.ListTest",
     deps = [
-        ":functional_java"
+        ":functional_java",
     ],
-    test_class = "com.functional.CaseTest"
+)
+
+java_test(
+    name = "test_executable",
+    srcs = [
+        "test/java/com/functional/ExecutableTest.java",
+    ],
+    test_class = "com.functional.ExecutableTest",
+    deps = [
+        ":functional_java",
+    ],
 )
