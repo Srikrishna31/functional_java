@@ -27,4 +27,33 @@ public class ListTest {
         Function<Double, Double> addTaxAndShipping = addTax.andThen(addShipping);
         System.out.println(map(prices, addTaxAndShipping));
     }
+
+    private static List<Integer> range(Integer start, Integer limit) {
+        return unfold(start, x -> x + 1, x -> x < limit);
+    }
+
+    private static List<Integer> rangeRecursive(Integer start, Integer end) {
+        return start <= end ?
+                CollectionUtilities.list() :
+                prepend(start, range(start + 1, end));
+    }
+    @Test
+    public void testUnfold() {
+        /**
+         * To test the unfold function, we will simulate the regularly used construct
+         * in programming:
+         * for (int i = 0; i < limit; i++) {
+         *  some processing
+         *  }
+         *  The idea is to abstract out the loop, so that one can concentrate on writing
+         *  the core logic of producing an element.
+         */
+        var res = range(1, 10);
+
+        System.out.println(res);
+
+        rangeRecursive(0, 5).forEach(System.out::println);
+
+        System.out.println(map(range(0, 10), x -> x * x));
+    }
 }

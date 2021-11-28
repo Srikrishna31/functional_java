@@ -9,6 +9,7 @@ java_library(
         "main/java/com/functional/Executable.java",
         "main/java/com/functional/Function.java",
         "main/java/com/functional/Result.java",
+        "main/java/com/functional/TailCall.java",
         "main/java/com/functional/Tuple.java",
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/List.java",
@@ -57,6 +58,17 @@ java_test(
         "test/java/com/functional/ExecutableTest.java",
     ],
     test_class = "com.functional.ExecutableTest",
+    deps = [
+        ":functional_java",
+    ],
+)
+
+java_test(
+    name = "test_tailcall",
+    srcs = [
+        "test/java/com/functional/TailCallTest.java",
+    ],
+    test_class = "com.functional.TailCallTest",
     deps = [
         ":functional_java",
     ],

@@ -181,4 +181,25 @@ public class List<T> {
             e.apply(t);
         }
     }
+
+    /**
+     * A generic function, helpful to generate a list of values, based on the start and end values, and the
+     * predicate. It is called unfold, since it starts out with a seed value, and incrementally (corecursively)
+     * builds up the subsequent values based on a condition.
+     * @param seed : Starting value to be inserted in the list.
+     * @param f : A function that generates the next element based on the current element.
+     * @param p : A predicate which returns a boolean, given the current value of type T.
+     * @param <T> : The type parameter of the elements in the list.
+     * @return the constructed list of elements.
+     */
+    public static <T> java.util.List<T> unfold(T seed, Function<T, T> f, Function<T, Boolean> p) {
+        java.util.List<T> res = new ArrayList<>();
+        var temp = seed;
+        while(p.apply(temp)) {
+            res = append(res, temp);
+            temp = f.apply(temp);
+        }
+
+        return res;
+    }
 }
