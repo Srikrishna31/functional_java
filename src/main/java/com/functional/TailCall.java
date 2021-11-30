@@ -14,7 +14,12 @@ import java.util.function.Supplier;
  * Also refer to com.functional.TailCallTest class to see examples of using this class
  * to encapsulate Tail Recursive calls.
  * TailCall abstract has two subclasses namely: Suspend  and Return.
+ *
+ * We use an abstract class to model recursion, since if we use an interface, we
+ * cannot have a private constructor, and that allows the clients to extend the
+ * class, which is what we can prevent.
  * @param <T> : The type parameter representing the result of the computation.
+ *
  *
  */
 public abstract class TailCall<T> {

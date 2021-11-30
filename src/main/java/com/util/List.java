@@ -6,7 +6,10 @@ import java.util.Collections;
 
 import com.functional.Effect;
 import com.functional.Function;
+import com.functional.TailCall;
 
+import static com.functional.TailCall.ret;
+import static com.functional.TailCall.sus;
 /**
  * A functional list that supports all the functional operations on a list.
  */
@@ -60,12 +63,17 @@ public class List<T> {
      * @return the reduced type object.
      */
     public static <T,U> U foldLeft(java.util.List<T> ts, U identity, Function<U, Function<T, U>> f) {
-        var result = identity;
-        for (var t: ts) {
-            result = f.apply(result).apply(t);
+        class FoldHelper {
+            TailCall<U> go(java.util.List<T> ts, U acc) {
+                if (ts.isEmpty()) {
+                    return ret(acc);
+                } else {
+                    return sus(() -> go(tail(ts), f.apply(acc).apply(head(ts))));
+                }
+            }
         }
 
-        return result;
+        return new FoldHelper().go(ts, identity).eval();
     }
 
     /**
@@ -82,11 +90,14 @@ public class List<T> {
      * @return the reduced type object.
      */
     public static <T,U> U foldRight(java.util.List<T> ts, U identity, Function<T, Function<U, U>> f) {
-        var result = identity;
-        for( int i = ts.size(); i > 0; --i) {
-            result = f.apply(ts.get(i - 1)).apply(result);
+        class FoldHelper {
+            TailCall<U> go(java.util.List<T> ts, U acc) {
+                return ts.isEmpty() ? ret(acc) :
+                        sus(() -> go(tail(ts), f.apply(head(ts)).apply(acc)));
+            }
         }
-        return result;
+
+        return new FoldHelper().go(reverse(ts), identity).eval();
     }
 
     /**
@@ -201,5 +212,9 @@ public class List<T> {
         }
 
         return res;
+    }
+
+    public static java.util.List<Integer> range(Integer start, Integer end) {
+        return unfold(start, x -> x + 1, x -> x < end);
     }
 }

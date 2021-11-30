@@ -1,5 +1,8 @@
 package com.functional;
 
+import java.util.List;
+
+
 /**
  * A functional interface encapsulating a computation, which transforms a type T to type U.
  * Also provides utilities to compose functions, and curried versions of them.
@@ -43,5 +46,9 @@ public interface Function<T,U> {
 
     static <T,U,V> Function<Function<U,V>, Function<Function<T,U>, Function<T,V>>> higherAndThen() {
         return (Function<U,V> x) -> (Function<T,U> y) -> (T z) -> x.apply(y.apply(z));
+    }
+
+    static <T> Function<T, T> composeAll(List<Function<T, T>> fs) {
+        return com.util.List.foldRight(fs, identity(), x -> y -> x.compose(y));
     }
 }

@@ -1,5 +1,9 @@
 package com.util;
 
+import com.functional.TailCall;
+import static com.functional.TailCall.ret;
+import static com.functional.TailCall.sus;
+
 import org.junit.Test;
 
 import static com.util.List.*;
@@ -33,10 +37,16 @@ public class ListTest {
     }
 
     private static List<Integer> rangeRecursive(Integer start, Integer end) {
-        return start <= end ?
-                CollectionUtilities.list() :
-                prepend(start, range(start + 1, end));
+        class RangeHelper {
+            TailCall<List<Integer>> go(Integer start, List<Integer> acc) {
+                return (end <= start) ? ret(acc) :
+                        sus(() -> go(start + 1, append(acc, start)));
+            }
+        }
+
+        return new RangeHelper().go(start, List.of()).eval();
     }
+
     @Test
     public void testUnfold() {
         /**
