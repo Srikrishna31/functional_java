@@ -1,6 +1,8 @@
 #package(default_visibility = ["//src:__subpackages__"])
 package(default_visibility = ["//visibility:public"])
 
+load(":targets.bzl", "TARGETS")
+
 java_library(
     name = "functional_java",
     srcs = [
@@ -16,60 +18,16 @@ java_library(
     ],
 )
 
-java_binary(
-    name = "functional_java_bin",
-    srcs = [
-        "main/java/com/functional/Case.java",
-        "main/java/com/functional/Effect.java",
-        "main/java/com/functional/Function.java",
-        "main/java/com/functional/Result.java",
-        "main/java/com/functional/Tuple.java",
-        "main/java/com/util/CollectionUtilities.java",
-        "main/java/com/util/List.java",
-    ],
-    main_class = "com.util.List",
-)
-
-java_test(
-    name = "test_case",
-    srcs = [
-        "test/java/com/functional/CaseTest.java",
-    ],
-    test_class = "com.functional.CaseTest",
-    deps = [
-        ":functional_java",
-    ],
-)
-
-java_test(
-    name = "test_list",
-    srcs = [
-        "test/java/com/util/ListTest.java",
-    ],
-    test_class = "com.util.ListTest",
-    deps = [
-        ":functional_java",
-    ],
-)
-
-java_test(
-    name = "test_executable",
-    srcs = [
-        "test/java/com/functional/ExecutableTest.java",
-    ],
-    test_class = "com.functional.ExecutableTest",
-    deps = [
-        ":functional_java",
-    ],
-)
-
-java_test(
-    name = "test_tailcall",
-    srcs = [
-        "test/java/com/functional/TailCallTest.java",
-    ],
-    test_class = "com.functional.TailCallTest",
-    deps = [
-        ":functional_java",
-    ],
-)
+[
+    java_test(
+        name = "test_" + name,
+        srcs = [
+            file,
+        ],
+        test_class = clas,
+        deps = [
+            ":functional_java",
+        ],
+    )
+    for name, file, clas in TARGETS
+]

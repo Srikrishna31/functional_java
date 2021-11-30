@@ -1,3 +1,5 @@
+load("//src:targets.bzl", "TARGETS")
+
 alias(
     name = "functional_java",
     actual = "//src:functional_java",
@@ -5,9 +7,5 @@ alias(
 
 test_suite(
     name = "test_functional_java",
-    tests = [
-        "//src:test_case",
-        "//src:test_executable",
-        "//src:test_list",
-    ],
+    tests = ["//src:test_" + name for name, _, _ in TARGETS],
 )
