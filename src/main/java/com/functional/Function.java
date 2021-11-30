@@ -2,7 +2,7 @@ package com.functional;
 
 import java.util.List;
 
-
+import static com.util.List.reverse;
 /**
  * A functional interface encapsulating a computation, which transforms a type T to type U.
  * Also provides utilities to compose functions, and curried versions of them.
@@ -49,6 +49,26 @@ public interface Function<T,U> {
     }
 
     static <T> Function<T, T> composeAll(List<Function<T, T>> fs) {
-        return com.util.List.foldRight(fs, identity(), x -> y -> x.compose(y));
+        return composeAllWithFoldLeft(fs);
+    }
+
+    static <T> Function<T, T> composeAllWithFoldLeft(List<Function<T, T>> fs) {
+        return x -> com.util.List.foldLeft(com.util.List.reverse(fs), x, a -> b -> b.apply(a));
+    }
+
+    static <T> Function<T, T> composeAllWithFoldRight(List<Function<T, T>> fs) {
+        return x -> com.util.List.foldRight(fs, x, a -> a::apply);
+    }
+
+    static <T> Function<T, T> andThenAll(List<Function<T, T>> fs) {
+        return andThenAllWithFoldLeft(fs);
+    }
+
+    static <T> Function<T, T> andThenAllWithFoldLeft(List<Function<T, T>> fs) {
+        return x -> com.util.List.foldLeft(fs, x, a-> b -> b.apply(a));
+    }
+
+    static <T> Function<T, T> andThenAllWithFoldRight(List<Function<T, T>> fs) {
+        return x -> com.util.List.foldRight(reverse(fs), x, a -> a::apply);
     }
 }

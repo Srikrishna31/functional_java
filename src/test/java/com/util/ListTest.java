@@ -66,4 +66,11 @@ public class ListTest {
 
         System.out.println(map(range(0, 10), x -> x * x));
     }
+
+    @Test
+    public void testListReverse() {
+        var ls = com.util.List.list(1,2,3);
+
+        System.out.println(com.util.List.reverse(ls));
+    }
 }

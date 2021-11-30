@@ -2,6 +2,7 @@ package com.util;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import com.functional.Effect;
@@ -214,7 +215,26 @@ public class List<T> {
         return res;
     }
 
+    /**
+     * A convenience function to construct a list of integers for the given range.
+     * Given two integers such that start <= end, this function constructs a list
+     * of (end - start) consecutive integer list and returns it.
+     * Note that a more general function unfold can be used for complex conditions.
+     * @param start : The start value from which the integers should begin.
+     * @param end : The end value before which the integers should end.
+     * @return the list of consecutive integers from start to end (excluded).
+     */
     public static java.util.List<Integer> range(Integer start, Integer end) {
         return unfold(start, x -> x + 1, x -> x < end);
+    }
+
+    /**
+     * A convenience function to turn an array into a list.
+     * @param ts : the array of t's
+     * @param <T> : type parameter of T.
+     * @return List of ts.
+     */
+    public static <T> java.util.List<T> list(T...ts) {
+        return Collections.unmodifiableList(Arrays.asList(ts));
     }
 }
