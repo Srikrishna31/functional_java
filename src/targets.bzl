@@ -9,4 +9,5 @@ TARGETS = [
     ("executable", "test/java/com/functional/ExecutableTest.java", "com.functional.ExecutableTest"),
     ("tailcall", "test/java/com/functional/TailCallTest.java", "com.functional.TailCallTest"),
     ("function", "test/java/com/functional/FunctionTest.java", "com.functional.FunctionTest"),
+    ("memoize", "test/java/com/util/MemoizeTest.java", "com.util.MemoizeTest"),
 ]

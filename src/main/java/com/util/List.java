@@ -8,6 +8,7 @@ import java.util.Collections;
 import com.functional.Effect;
 import com.functional.Function;
 import com.functional.TailCall;
+import com.functional.Tuple;
 
 import static com.functional.TailCall.ret;
 import static com.functional.TailCall.sus;
@@ -66,11 +67,8 @@ public class List<T> {
     public static <T,U> U foldLeft(java.util.List<T> ts, U identity, Function<U, Function<T, U>> f) {
         class FoldHelper {
             TailCall<U> go(java.util.List<T> ts, U acc) {
-                if (ts.isEmpty()) {
-                    return ret(acc);
-                } else {
-                    return sus(() -> go(tail(ts), f.apply(acc).apply(head(ts))));
-                }
+                return ts.isEmpty() ? ret(acc) :
+                    sus(() -> go(tail(ts), f.apply(acc).apply(head(ts))));
             }
         }
 
@@ -205,14 +203,15 @@ public class List<T> {
      * @return the constructed list of elements.
      */
     public static <T> java.util.List<T> unfold(T seed, Function<T, T> f, Function<T, Boolean> p) {
-        java.util.List<T> res = new ArrayList<>();
-        var temp = seed;
-        while(p.apply(temp)) {
-            res = append(res, temp);
-            temp = f.apply(temp);
+        //Once foldLeft or foldRight gets the capability of early termination, we can
+        //replace the body with a fold.
+        class UnfoldHelper {
+            TailCall<java.util.List<T>> go(java.util.List<T> acc, T seed) {
+                return p.apply(seed) ? sus(() -> go(append(acc, seed), f.apply(seed))) : ret(acc);
+            }
         }
 
-        return res;
+        return new UnfoldHelper().go(java.util.List.<T>of(), seed).eval();
     }
 
     /**
@@ -236,5 +235,33 @@ public class List<T> {
      */
     public static <T> java.util.List<T> list(T...ts) {
         return Collections.unmodifiableList(Arrays.asList(ts));
+    }
+
+    /**
+     * This method takes a seed, a function and a number n, and creates a list of length n by applying
+     * the function to each element to compute the next one.
+     * @param seed : The element to start the list with.
+     * @param f : Function to apply to each element.
+     * @param n : Number of elements to generate.
+     * @param <T> : Type parameter of the element.
+     * @return
+     */
+    public static <T> java.util.List<T> iterate(T seed, Function<T, T> f, int n) {
+        var startSeed = Tuple.create(seed, 1);
+        var res = unfold(startSeed, (Tuple<T, Integer> s) -> Tuple.create(f.apply(s._1), s._2 + 1), x -> x._2 < n);
+        return map(res, x -> x._1);
+    }
+
+    /**
+     * This list constructs a list of values with the provided seperator.
+     * @param list : List of elements which need to be stringized.
+     * @param separator : The seperator which should be inserted between each element.
+     * @param <T> : The type parameter of the the elements.
+     * @return the string containing stringized elements, seperated by the separator.
+     */
+    public static <T> String makeString(java.util.List<T> list, String separator) {
+        return list.isEmpty() ? "" : tail(list).isEmpty() ? head(list).toString() :
+                //Do this so that the seperator appears after the first element.
+                head(list) + foldLeft(tail(list), "" , (String s) -> (T t) -> s + separator + t);
     }
 }
