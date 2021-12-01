@@ -17,6 +17,7 @@ import static com.functional.TailCall.ret;
 import static com.functional.TailCall.sus;
 
 import java.math.BigInteger;
+import java.util.function.Supplier;
 
 public class MemoizeTest {
     @Test
@@ -41,36 +42,13 @@ public class MemoizeTest {
         return x * 2;
     }
 
-    @Test
-    public void testMemoization() {
-        Function<Integer, Integer> f = MemoizeTest::longCalculation;
-        Function<Integer, Integer> g = Memoizer.memoize(f);
-
-        var startTime = System.currentTimeMillis();
-        var res1 = g.apply(1);
-        var time1 = System.currentTimeMillis() - startTime;
-
-        startTime = System.currentTimeMillis();
-        var res2 = g.apply(1);
-        var time2 = System.currentTimeMillis() - startTime;
-
-        System.out.println(time1 + ", " + time2);
-
-        assertEquals(res1, res2);
-        assertTrue(time2 < time1);
-    }
-
-    @Test
-    public void testMemoizedFibo() {
-        Function<Tuple3<BigInteger, BigInteger, BigInteger>, BigInteger> f = x -> fibo(x._1, x._2, x._3).eval();
-        Function<Tuple3<BigInteger, BigInteger, BigInteger>, BigInteger> fm = Memoizer.memoize(f);
-
+    private static <T> void verifyMemoizedFunction(Supplier<T> f) {
         long startTime = System.currentTimeMillis();
-        var result1 = fm.apply(Tuple3.create(BigInteger.ONE, BigInteger.ZERO, BigInteger.valueOf(50)));
+        var result1 = f.get();
         long time1 = System.currentTimeMillis() - startTime;
 
         startTime = System.currentTimeMillis();
-        var result2 = fm.apply(Tuple3.create(BigInteger.ONE, BigInteger.ZERO, BigInteger.valueOf(50)));
+        var result2 = f.get();
         long time2 = System.currentTimeMillis() - startTime;
 
         System.out.println(result1 + ",  " + result2);
@@ -78,6 +56,22 @@ public class MemoizeTest {
 
         assertEquals(result1, result2);
         assertTrue(time2 < time1);
+    }
+
+    @Test
+    public void testMemoization() {
+        Function<Integer, Integer> f = MemoizeTest::longCalculation;
+        Function<Integer, Integer> g = Memoizer.memoize(f);
+
+        verifyMemoizedFunction(() -> g.apply(1));
+    }
+
+    @Test
+    public void testMemoizedFibo() {
+        Function<Tuple3<BigInteger, BigInteger, BigInteger>, BigInteger> f = x -> fibo(x._1, x._2, x._3).eval();
+        Function<Tuple3<BigInteger, BigInteger, BigInteger>, BigInteger> fm = Memoizer.memoize(f);
+
+        verifyMemoizedFunction(() -> fm.apply(Tuple3.create(BigInteger.ONE, BigInteger.ZERO, BigInteger.valueOf(50))));
     }
 
     private static TailCall<BigInteger> fibo(BigInteger acc, BigInteger acc1, BigInteger n) {
@@ -93,19 +87,7 @@ public class MemoizeTest {
         Function<Integer, Function<Integer, Function<Integer, Integer>>> f3m =
                 Memoizer.memoize(x -> Memoizer.memoize(y -> Memoizer.memoize(z -> longCalculation(x) + longCalculation(y)  + longCalculation(z))));
 
-        long startTime = System.currentTimeMillis();
-        Integer result1 = f3m.apply(2).apply(3).apply(4);
-        long time1 = System.currentTimeMillis() - startTime;
-
-        startTime = System.currentTimeMillis();
-        Integer result2 = f3m.apply(2).apply(3).apply(4);
-        long time2 = System.currentTimeMillis() - startTime;
-
-        System.out.println(result1 + ",  " + result2);
-        System.out.println(time1  + ", " + time2);
-
-        assertEquals(result1, result2);
-        assertTrue(time2 < time1);
+        verifyMemoizedFunction(() -> f3m.apply(2).apply(3).apply(4));
     }
 
     @Test
@@ -115,19 +97,6 @@ public class MemoizeTest {
 
         Function<Tuple3<Integer, Integer, Integer>, Integer> ftm = Memoizer.memoize(ft);
 
-        long startTime = System.currentTimeMillis();
-        Integer result1 = ftm.apply(Tuple3.create(2,3,4));
-        long time1 = System.currentTimeMillis() - startTime;
-
-        startTime = System.currentTimeMillis();
-        Integer result2 = ftm.apply(Tuple3.create(2, 3, 4));
-        long time2 = System.currentTimeMillis() - startTime;
-
-        System.out.println(result1 + ",  " + result2);
-        System.out.println(time1  + ", " + time2);
-
-        assertEquals(result1, result2);
-        assertTrue(time1 >= 3000);
-        assertTrue(time2 < 3000);
+        verifyMemoizedFunction(() -> ftm.apply(Tuple3.create(2, 3, 4)));
     }
 }

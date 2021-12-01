@@ -1,6 +1,7 @@
 package com.functional;
 
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
 
@@ -21,8 +22,10 @@ public class TailCallTest {
     @Test
     public void testTailCall() {
         var call = add(5, 7);
+        var result = call.eval();
+        System.out.println(result);
 
-        System.out.println(call.eval());
+        assertEquals(result, Integer.valueOf(12));
     }
 
     /**
@@ -65,12 +68,19 @@ public class TailCallTest {
 
     @Test
     public void testEnclosedTailCall() {
-        System.out.println(add.apply(5).apply(10000));
+        var res = add.apply(5).apply(10000);
+        System.out.println(res);
+
+        assertEquals(res, Integer.valueOf(10005));
     }
 
     @Test
     public void testTailRecursiveFibonacci() {
+        var res = fib(10000);
         System.out.println(fib(10000));
+
+        //currently there is no way of initializing big numbers, so use the same function call.
+        assertEquals(res, fib(10000));
     }
 
     private static BigInteger fib(int  x) {
