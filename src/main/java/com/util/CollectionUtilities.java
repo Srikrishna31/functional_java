@@ -12,8 +12,10 @@ import com.functional.Tuple;
 
 import static com.functional.TailCall.ret;
 import static com.functional.TailCall.sus;
+
 /**
- * A functional list that supports all the functional operations on a list.
+ * A utility class which provides various operations on the java list.
+ * @param <T>
  */
 public class CollectionUtilities<T> {
     /**
