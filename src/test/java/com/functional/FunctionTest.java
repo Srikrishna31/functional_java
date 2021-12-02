@@ -4,9 +4,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 import static com.functional.Function.*;
-import static com.util.List.range;
-import static com.util.List.map;
-import static com.util.List.list;
+import static com.util.CollectionUtilities.range;
+import static com.util.CollectionUtilities.map;
+import static com.util.CollectionUtilities.list;
 
 public class FunctionTest {
     @Test

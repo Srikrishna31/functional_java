@@ -4,9 +4,9 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static com.util.List.map;
-import static com.util.List.forEach;
-import static com.util.List.foldLeft;
+import static com.util.CollectionUtilities.map;
+import static com.util.CollectionUtilities.forEach;
+import static com.util.CollectionUtilities.foldLeft;
 
 import static com.functional.Executable.compose;
 

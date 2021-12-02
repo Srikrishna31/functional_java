@@ -9,9 +9,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import static com.util.List.map;
-import static com.util.List.iterate;
-import static com.util.List.makeString;
+import static com.util.CollectionUtilities.map;
+import static com.util.CollectionUtilities.iterate;
+import static com.util.CollectionUtilities.makeString;
 
 import static com.functional.TailCall.ret;
 import static com.functional.TailCall.sus;

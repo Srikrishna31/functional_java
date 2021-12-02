@@ -6,12 +6,12 @@ import static com.functional.TailCall.sus;
 
 import org.junit.Test;
 
-import static com.util.List.*;
+import static com.util.CollectionUtilities.*;
 import com.functional.Function;
 
 import java.util.List;
 
-public class ListTest {
+public class CollectionUtilitiesTest {
     @Test
     public void testCase() {
         Function<Double, Double> addTax = x -> x * 1.09;
@@ -69,8 +69,8 @@ public class ListTest {
 
     @Test
     public void testListReverse() {
-        var ls = com.util.List.list(1,2,3);
+        var ls = list(1,2,3);
 
-        System.out.println(com.util.List.reverse(ls));
+        System.out.println(reverse(ls));
     }
 }
