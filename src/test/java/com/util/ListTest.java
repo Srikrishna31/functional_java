@@ -80,5 +80,33 @@ public class ListTest {
 
         assertEquals(list(9,8,7,6,5,4,3,2,1).toString(), l1.reverse().toString());
     }
+
+    @Test
+    public void testMapWithFold() {
+        var res = l1.foldRight(list(), v -> acc -> acc.cons(3 * v));
+
+        System.out.println(res);
+
+        assertEquals(list(3,6,9,12,15,18,21,24,27).toString(), res.toString());
+    }
+
+    @Test
+    public void testMap() {
+        var res = l1.map(x -> x *3);
+
+        System.out.println(res);
+
+        assertEquals(list(3,6,9,12,15,18,21,24,27).toString(), res.toString());
+
+    }
+
+    @Test
+    public void testFilter() {
+        var res = l1.filter(x -> x <= 5);
+
+        System.out.println(res);
+
+        assertEquals(list(1,2,3,4,5).toString(), res.toString());
+    }
 }
 

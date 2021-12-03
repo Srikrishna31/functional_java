@@ -49,14 +49,8 @@ public abstract class List<A> {
 
     @Override
     public String toString() {
-        class StringHelper {
-            TailCall<StringBuilder> go(StringBuilder acc, List<A> as) {
-                return as.isEmpty() ? ret(acc) : sus(() -> go(acc.append(as.head().toString()).append(", "), as.tail()));
-            }
-        }
-
         return String.format("[%sNIL]",
-                new StringHelper().go(new StringBuilder(), this).eval().toString());
+                foldLeft(new StringBuilder(), acc -> v -> acc.append(", ").append(v)));
     }
 
     /**
@@ -112,8 +106,8 @@ public abstract class List<A> {
      * on the left, and the accumulating value on the right(for each element of the list).
      * @param identity : The identity of the operation. This will be returned if the
      *                 input list is empty.
-     * @param f : Accumulating function, which is a curried function, which accepts a parameter of type U, and
-     *          returns a function that accepts a parameter of type T and returns a U.
+     * @param f : Accumulating function, which is a curried function, which accepts a parameter of type B, and
+     *          returns a function that accepts a parameter of type A and returns a B.
      * @param <B> : The type of reduction element.
      * @return the reduced type object.
      */
@@ -152,7 +146,7 @@ public abstract class List<A> {
     }
 
     /**
-     * @return Returs the number of elements in the list.
+     * @return Returns the number of elements in the list.
      */
     public int length() {
         return foldLeft(0, acc -> v -> acc + 1);
@@ -174,6 +168,56 @@ public abstract class List<A> {
      */
     public List<A> cons(A a) {
         return new Cons<>(a, this);
+    }
+
+    /**
+     * This method transforms a list of type List<A> to a list of type List<B>,
+     * by applying the given function to each element of the list. The runtime of
+     * this function is O(2n), since there is a reversing of the list.
+     * @param f : The function to be applied to each element of the list.
+     * @param <B> : The type into which the function maps each element.
+     * @return the transformed list containing the elements of type B.
+     */
+    public <B> List<B> map(Function<A, B> f) {
+        return foldRight(list(), v -> acc -> acc.cons(f.apply(v)));
+    }
+
+    /**
+     * This functon applies a predicate to each element and returns the list of
+     * elements that match the criterion. The runtime of this function is O(2n),
+     * since there is a reversing of the list.
+     * @param p : The predicate to be applied to each function.
+     * @return the list of values for which the predicate returned true.
+     */
+    public List<A> filter(Function<A, Boolean> p) {
+        return foldRight(list(), v -> acc -> p.apply(v) ? acc.cons(v) : acc);
+    }
+
+    /**
+     * This function is a generalization of map. The function here returns a list
+     * of elements, rather than a signle element, for each application. The flatMap
+     * then flattens the list into a single list. The runtime of this function
+     * could be O(n2), since it needs to traverse the list for each invocation.
+     * @param f : The function which produces a List<B> for each element of List<A>.
+     * @param <B> : The type parameter of mapped result.
+     * @return the list of objects of type B.
+     */
+    public <B> List<B> flatMap(Function<A, List<B>> f) {
+//        return flatten(map(f));
+        return foldRight(list(), v -> acc -> concat(f.apply(v), acc));
+    }
+
+    /**
+     * A convenience function to flatten a list of list of elements into a single
+     * list. The runtime of this function could be O(n2), since it needs to
+     * traverse the list for each invocation.
+     * @param aas : List of list of a.
+     * @param <A> : Type parameter of elements of inner list.
+     * @return the flattened list of elements.
+     */
+    public static <A> List<A> flatten(List<List<A>> aas) {
+        return aas.foldRight(list(), v -> acc -> concat(v, acc));
+
     }
 
     private static class Nil<A> extends List<A> {
