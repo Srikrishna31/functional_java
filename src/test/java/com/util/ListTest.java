@@ -52,7 +52,7 @@ public class ListTest {
         var res = new SumHelper().go(l1, 0).eval();
         System.out.println(res);
 
-        Function<List<Integer>, Integer> add = ls -> foldRight(ls, 0, x -> y -> x +y);
+        Function<List<Integer>, Integer> add = ls -> ls.foldRight(0, x -> y -> x + y);
 
         assertEquals(Integer.valueOf(45), res);
         assertEquals(res, add.apply(l1));
@@ -72,6 +72,13 @@ public class ListTest {
         System.out.println(l1.length());
 
         assertEquals(l1.length(), 9);
+    }
+
+    @Test
+    public void testReverse() {
+        System.out.println("Reverse: " + l1.reverse());
+
+        assertEquals(list(9,8,7,6,5,4,3,2,1).toString(), l1.reverse().toString());
     }
 }
 

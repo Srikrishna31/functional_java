@@ -103,47 +103,43 @@ public abstract class List<A> {
      * @return : the combined list of list1 and list2.
      */
     public static <A> List<A> concat(List<A> list1, List<A> list2) {
-        return foldRight(list1, list2, v -> acc -> acc.cons(v));
+        return list1.foldRight(list2, v -> acc -> acc.cons(v));
     }
 
     /**
      * A general purpose function which can be used to turn the list into any other type.
      * This function operates on the list from left to right, applying the accumulating operator
      * on the left, and the accumulating value on the right(for each element of the list).
-     * @param ls: CollectionUtilities of values which need to be folded into another type.
      * @param identity : The identity of the operation. This will be returned if the
      *                 input list is empty.
      * @param f : Accumulating function, which is a curried function, which accepts a parameter of type U, and
      *          returns a function that accepts a parameter of type T and returns a U.
-     * @param <A> : Type of list elements.
      * @param <B> : The type of reduction element.
      * @return the reduced type object.
      */
-    public static <A,B> B foldLeft(List<A> ls, B identity, Function<B, Function<A, B>> f) {
+    public <B> B foldLeft(B identity, Function<B, Function<A, B>> f) {
         class FoldHelper {
             TailCall<B> go(List<A> ls, B acc) {
                 return ls.isEmpty() ? ret(acc) : sus(() -> go(ls.tail(), f.apply(acc).apply(ls.head())));
             }
         }
 
-        return new FoldHelper().go(ls, identity).eval();
+        return new FoldHelper().go(this, identity).eval();
     }
 
     /**
      * Another general purpose function which can be used to turn the list into any other type.
      * This function operates on the list from right to left, applying the accumulating operator
      * on the right, and the accumulating value on the left(for each element of the list).
-     * @param ls: List of values which need to be folded into another type.
      * @param identity : The identity element of the operation. This will be returned if the
      *                 input list is empty.
      * @param f : Accumulationg function that takes a parameter of type A, and returns a function
      *          that takes a parameter of type B and returns a B.
-     * @param <A> : The type of elements in the list.
      * @param <B> : The type of reduction element.
      * @return the reduced type object.
      */
-    public static <A,B> B foldRight(List<A> ls, B identity, Function<A, Function<B, B>> f) {
-        return ls.isEmpty() ? identity : f.apply(ls.head()).apply(foldRight(ls.tail(), identity,f));
+    public <B> B foldRight(B identity, Function<A, Function<B, B>> f) {
+        return reverse().foldLeft(identity, acc -> v -> f.apply(v).apply(acc));
     }
 
     /**
@@ -159,7 +155,7 @@ public abstract class List<A> {
      * @return Returs the number of elements in the list.
      */
     public int length() {
-        return foldRight(this, 0, v -> acc -> acc + 1);
+        return foldLeft(0, acc -> v -> acc + 1);
     }
 
     /**
@@ -167,13 +163,7 @@ public abstract class List<A> {
      * @return the list with elements in the reverse order.
      */
     public List<A> reverse() {
-        class ReverseHelper {
-            TailCall<List<A>>  go(List<A> acc, List<A> as) {
-                return as.isEmpty() ? ret(acc) : sus(() -> go(new Cons<>(as.head(), acc), as.tail()));
-            }
-        }
-
-        return new ReverseHelper().go(list(), this).eval();
+        return foldLeft(list(), acc -> v -> acc.cons(v));
     }
 
     /**
