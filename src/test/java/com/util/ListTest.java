@@ -11,6 +11,8 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class ListTest {
+    private final List<Integer> l1 = list(1,2,3,4,5,6,7,8,9);
+
     @Test
     public void testList() {
 
@@ -20,7 +22,10 @@ public class ListTest {
 
         var list1 = List.<Integer>list();
 
+        var res = list1.dropWhile(x -> false);
         System.out.println(list1.dropWhile(x -> false));
+
+        assertEquals(list(), res);
     }
 
     @Test
@@ -37,7 +42,6 @@ public class ListTest {
 
     @Test
     public void testListSum() {
-        var l1 = list(1,2,3,4,5,6,7,8,9);
 
         class SumHelper{
             TailCall<Integer> go(List<Integer> ls, Integer sum) {
@@ -52,6 +56,22 @@ public class ListTest {
 
         assertEquals(Integer.valueOf(45), res);
         assertEquals(res, add.apply(l1));
+    }
+
+    @Test
+    public void testDrop() {
+        var res = l1.drop(5);
+
+        System.out.println(res);
+
+        assertEquals(res.toString(), list(6,7,8,9).toString());
+    }
+
+    @Test
+    public void testLength() {
+        System.out.println(l1.length());
+
+        assertEquals(l1.length(), 9);
     }
 }
 
