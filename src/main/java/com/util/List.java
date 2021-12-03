@@ -94,6 +94,59 @@ public abstract class List<A> {
     }
 
     /**
+     * Concatenates two lists, and returns a combined list. This function traverses
+     * the entire list1, and then links the last element of the first list to the
+     * second one.
+     * @param list1 : The first list to be concatenated.
+     * @param list2 : The second list to be concatenated.
+     * @param <A> : Type parameter of the lists to be concatenated.
+     * @return : the combined list of list1 and list2.
+     */
+    public static <A> List<A> concat(List<A> list1, List<A> list2) {
+        return list1.isEmpty() ? list2 : new Cons<>(list1.head(), concat(list1.tail(), list2));
+    }
+
+
+    /**
+     * Another general purpose function which can be used to turn the list into any other type.
+     * This function operates on the list from right to left, applying the accumulating operator
+     * on the right, and the accumulating value on the left(for each element of the list).
+     * @param ls: List of values which need to be folded into another type.
+     * @param identity : The identity element of the operation. This will be returned if the
+     *                 input list is empty.
+     * @param f : Accumulationg function that takes a parameter of type A, and returns a function
+     *          that takes a parameter of type B and returns a B.
+     * @param <A> : The type of elements in the list.
+     * @param <B> : The type of reduction element.
+     * @return the reduced type object.
+     */
+    public static <A,B> B foldRight(List<A> ls, B identity, Function<A, Function<B, B>> f) {
+        return ls.isEmpty() ? identity : f.apply(ls.head()).apply(foldRight(ls.tail(), identity,f));
+    }
+
+    /**
+     * Returns the list with last element removed. This function is currently
+     * inefficient, since the running time is O(2N).
+     * @return the list with last element removed.
+     */
+    public List<A> init() {
+        return reverse().tail().reverse();
+    }
+
+    /**
+     * Reverses the order of the elements and returns a new list.
+     * @return the list with elements in the reverse order.
+     */
+    public List<A> reverse() {
+        class ReverseHelper {
+            TailCall<List<A>>  go(List<A> acc, List<A> as) {
+                return as.isEmpty() ? ret(acc) : sus(() -> go(new Cons<>(as.head(), acc), as.tail()));
+            }
+        }
+
+        return new ReverseHelper().go(list(), this).eval();
+    }
+    /**
      * Implements the functional method cons, adding an element at the beginning
      * of a list.
      * @param a : The element that needs to be added at the beginning.
@@ -184,10 +237,11 @@ public abstract class List<A> {
     public static <A> List<A> list(A... as) {
         class ListHelper {
             TailCall<List<A>> go(List<A> acc, int i) {
-                return i < as.length ? sus(() -> go(new Cons<>(as[i], acc), i+1)) : ret(acc);
+                //Need to construct the list from reverse, so do downcounting.
+                return i >= 0  ? sus(() -> go(new Cons<>(as[i], acc), i-1)) : ret(acc);
             }
         }
 
-        return new ListHelper().go(list(), 0).eval();
+        return new ListHelper().go(list(), as.length - 1).eval();
     }
 }
