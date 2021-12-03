@@ -19,6 +19,7 @@ java_library(
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/List.java",
         "main/java/com/util/Memoizer.java",
+        "main/java/com/util/Option.java",
     ],
 )
 

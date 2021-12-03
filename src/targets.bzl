@@ -11,4 +11,5 @@ TARGETS = [
     ("function", "test/java/com/functional/FunctionTest.java", "com.functional.FunctionTest"),
     ("memoize", "test/java/com/util/MemoizeTest.java", "com.util.MemoizeTest"),
     ("list", "test/java/com/util/ListTest.java", "com.util.ListTest"),
+    ("option", "test/java/com/util/OptionTest.java", "com.util.OptionTest"),
 ]
