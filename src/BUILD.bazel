@@ -18,6 +18,7 @@ java_library(
         "main/java/com/functional/Tuple5.java",
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/List.java",
+        "main/java/com/util/Map.java",
         "main/java/com/util/Memoizer.java",
         "main/java/com/util/Option.java",
     ],
