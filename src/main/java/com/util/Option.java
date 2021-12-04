@@ -1,7 +1,9 @@
 package com.util;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 import com.functional.Function;
+import static com.util.List.list;
 
 /**
  * A facility for representing absent values in the computation. This relieves
@@ -49,6 +51,20 @@ public abstract class Option<A> {
     public abstract <B> Option<B> map(Function<A, B> f);
 
     /**
+     * This function returns whether the underlying type is a Some type or a none type.
+     * This function shouldn't be needed for typical functional programming techniques,
+     * but is provided for covenience.
+     * @return true if udnerlying object is some, false otherwise.
+     */
+    public abstract Boolean isSome();
+
+    @Override
+    public abstract boolean equals(Object o);
+
+    @Override
+    public abstract int hashCode();
+
+    /**
      * This function is a generalized version of map. The function parameter
      * accepts a paramter of type A and returns a value of Option<B>.
      * @param f : Function accepting a value of type A and returning a value of Option<B>
@@ -71,6 +87,56 @@ public abstract class Option<A> {
 
     public Option<A> orElse(Supplier<Option<A>> defaultValue) {
         return map(x -> this).getOrElse(defaultValue);
+    }
+
+    /**
+     * An adaptor function, which transforms a function that maps A to B into a function
+     * that maps an Option<A> to Option<B>. If the supplied function throws an exception,
+     * this function swallows it and returns a None object.
+     * @param f : Function that maps an A into a B.
+     * @param <B> : Type parameter of return value.
+     * @return a function that maps an Option<A> to Option<B>.
+     */
+    public <B> Function<Option<A>, Option<B>> lift(Function<A, B> f) {
+        return (Option<A> o) -> {
+            try {
+                return o.map(f);
+            } catch (Exception e)  {
+                return Option.none();
+            }
+        };
+    }
+
+    public <B,C> Option<C> map2(Option<B> that, Function<A, Function<B, C>> f) {
+        return flatMap(a -> that.map(b -> f.apply(a).apply(b)));
+    }
+
+
+    /**
+     * This function combines a List<Option<A>> into an Option<List<A>>.
+     * It will be Some<List<A>> if all values in the original list were Some
+     * instances, or a None<List<A>> otherwise.
+     * @param list : List of Optionals of type A.
+     * @param <A> : Type parameter of elements in Option.
+     * @return the Optional List of elements of type A.
+     */
+    public static <A> Option<List<A>> sequence(List<Option<A>> list) {
+        return traverse(list, x -> x);
+    }
+
+    /**
+     * This function combines a List<A> into an Optional of List<B> by applying the
+     * transform function to each element in the list. If all values return a Some
+     * instance after the application of the function, then the result will be
+     * Some<List<B>>, otherwise a None<List<B>> is returned.
+     * @param l : the list of elements of type A.
+     * @param f : The function which transforms an A into an Option<B>.
+     * @param <A> : Type parameter of elements in the input list.
+     * @param <B> : Type parameter of elements in the output list.
+     * @return the optional instance of list of elements of type B.
+     */
+    public static <A, B> Option<List<B>> traverse(List<A> l, Function<A, Option<B>> f) {
+        return l.foldRight(Option.some(List.list()), v -> acc -> f.apply(v).flatMap(b -> acc.map(rs -> rs.cons(b))));
     }
 
     @Override
@@ -97,6 +163,21 @@ public abstract class Option<A> {
         @Override
         public <B> Option<B> map(Function<A, B> f) {
             return none();
+        }
+
+        @Override
+        public Boolean isSome() {
+            return false;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || o instanceof None;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
         }
     }
 
@@ -125,6 +206,21 @@ public abstract class Option<A> {
         @Override
         public <B> Option<B> map(Function<A, B> f) {
             return some(f.apply(value));
+        }
+
+        @Override
+        public Boolean isSome() {
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o || (o instanceof Some && this.value.equals(((Some<?>)o).value));
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(value);
         }
     }
 

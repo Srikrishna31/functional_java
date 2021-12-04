@@ -107,4 +107,19 @@ public class OptionTest {
         assertEquals(mean.apply(list(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)).getOrElse(() -> 0.0),
                 Double.valueOf(5.0));
     }
+
+    @Test
+    public void testOptionListCompose() {
+        var l = list(Option.some(1), Option.some(2), Option.some(3));
+        var res = Option.sequence(l);
+
+        var l1 = list(Option.some(1), Option.<Integer>none(), Option.some(3));
+        var res1 = Option.sequence(l1);
+
+        System.out.println(res);
+        System.out.println(res1);
+
+        assertEquals(list(1, 2, 3).toString(), res.getOrElse(() -> list()).toString());
+        assertEquals(Option.none().toString(), res1.toString());
+    }
 }
