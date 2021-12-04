@@ -36,4 +36,75 @@ public class OptionTest {
         assertEquals(max1, 7);
         assertEquals(max2,0);
     }
+
+    private static class Toon {
+        private final String firstName;
+        private final String lastName;
+        private final Option<String> email;
+
+        Toon(String firstName, String lastName) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = Option.none();
+        }
+
+        Toon(String firstName, String lastName, String email) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = Option.some(email);
+        }
+
+        Option<String> getEmail() {
+            return email;
+        }
+    }
+
+    @Test
+    public void testOptionComposition() {
+        var toons = new Map<String, Toon>()
+                .put("Mickey", new Toon("Mikey", "Mouse", "mickey@disney.com"))
+                .put("Minnie", new Toon("Minnie", "Mouse"))
+                .put("Donald", new Toon("Donald", "Duck", "donald@disney.com"));
+
+        //Below code deomonstrates Option composition through Option::flatMap
+        Option<String> mickey = toons.get("Mickey").flatMap(Toon::getEmail);
+        Option<String> minnie = toons.get("Minnie").flatMap(Toon::getEmail);
+        Option<String> goofy = toons.get("Goofy").flatMap(Toon::getEmail);
+
+        /**
+         * The problem here is that Option hides the fact that there is no data
+         * associated with goofy in the map, whereas minnie has no email.
+         */
+        System.out.println(mickey.getOrElse(() -> "No data"));
+        System.out.println(minnie.getOrElse(() -> "No data"));
+        System.out.println(goofy.getOrElse(() -> "No data"));
+
+        assertEquals(mickey.getOrElse(() -> "No data"), "mickey@disney.com");
+        assertEquals(minnie.getOrElse(() -> "No data"), "No data");
+        assertEquals(goofy.getOrElse(() -> "No data"), "No data");
+    }
+
+    @Test
+    public void testVariance() {
+
+        //Calculation of mean, demonstrating the way of composing Lists and
+        //Options to compute mean.
+        Function<List<Double>, Option<Double>> mean = xs -> xs.isEmpty() ? Option.none() : xs.foldLeft(Option.some(0.0),
+                acc -> v -> acc.map(a -> a + v)).map(v -> v / xs.length());
+
+        //This function implements a variance of series, using options for
+        //non existent values, and demonstrates how to compose them.
+        Function<List<Double>, Option<Double>> variance = xs -> {
+            var m = mean.apply(xs);
+            return m.map(mn -> xs.map(x -> Math.pow(x - mn, 2)).foldLeft(0.0, acc -> v -> acc + v) / mn);
+        };
+
+        System.out.println("Mean: " + mean.apply(list(1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0)));
+        System.out.println("Variance: " + variance.apply(list(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)));
+        System.out.println("Mean on empty list: " + mean.apply(list()));
+
+        assertEquals(mean.apply(list()), Option.none());
+        assertEquals(mean.apply(list(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)).getOrElse(() -> 0.0),
+                Double.valueOf(5.0));
+    }
 }

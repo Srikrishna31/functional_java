@@ -49,15 +49,22 @@ public abstract class Option<A> {
     public abstract <B> Option<B> map(Function<A, B> f);
 
     /**
-     *
-     * @param f
-     * @param <B>
-     * @return
+     * This function is a generalized version of map. The function parameter
+     * accepts a paramter of type A and returns a value of Option<B>.
+     * @param f : Function accepting a value of type A and returning a value of Option<B>
+     * @param <B> : Type paramter of return value.
+     * @return the optional value possibly containing a value of type B.
      */
     public <B> Option<B> flatMap(Function<A, Option<B>> f) {
         return map(f).getOrElse(Option::none);
     }
 
+    /**
+     * This function applies a predicate to the containing value, and if the predicate
+     * returns false, then returns a None, otherwise returns the original value as is.
+     * @param p : A predicate function, which accepts a value of type A and returns a boolean.
+     * @return the original object, if the predicate returns true, otherwise None.
+     */
     public Option<A> filter(Function<A, Boolean> p) {
         return flatMap(x -> p.apply(x) ? this : none());
     }
