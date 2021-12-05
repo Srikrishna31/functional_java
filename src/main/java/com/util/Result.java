@@ -1,4 +1,6 @@
-package com.functional;
+package com.util;
+
+import com.functional.Effect;
 
 /**
  * This class handles the results of a computation, and allows to bind further

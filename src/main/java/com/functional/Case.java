@@ -1,5 +1,7 @@
 package com.functional;
 
+import com.util.Result;
+
 import java.util.function.Supplier;
 
 /**

@@ -1,13 +1,14 @@
 package com.functional;
 
+import com.util.Result;
 import org.junit.Test;
 import java.util.regex.Pattern;
 
 import static com.functional.Case.mcase;
 import static com.functional.Case.match;
 
-import static com.functional.Result.success;
-import static com.functional.Result.failure;
+import static com.util.Result.success;
+import static com.util.Result.failure;
 
 public class CaseTest {
     static Pattern emailPattern =
