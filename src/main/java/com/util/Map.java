@@ -22,6 +22,11 @@ public class Map<T, U> {
         return map.containsKey(t) ? Option.some(map.get(t)) : Option.none();
     }
 
+    public Result<U> getResult(final T t) {
+        return map.containsKey(t) ? Result.success(map.get(t))
+                : Result.failure(String.format("Key %s not found in map", t));
+    }
+
     public Map<T, U> put(T t, U u) {
         return add(this, t, u);
     }

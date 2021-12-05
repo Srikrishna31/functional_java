@@ -1,19 +1,44 @@
 package com.util;
 
 import com.functional.Effect;
+import com.functional.Function;
+
+import java.util.function.Supplier;
+import java.io.Serializable;
 
 /**
  * This class handles the results of a computation, and allows to bind further
  * computations on those resutls.
  * It provides two subclasses: Success and Failure, which encapsulate the corresponding
- * cases.
+ * cases. The Failure class encapsulates an exception, which can capture the entire
+ * error that could have occurred in a computation. A failure message (which could be
+ * a string) is also stored in an IllegalStateException.
  * The way to instantiate them is through static methods provided and not directly.
  */
-public interface Result<T> {
+public abstract class Result<T> implements Serializable {
+    /**
+     * Prevent the clients from extending this class.
+     */
+    private Result() {}
+
     /**
      * This method handles the effects to be applied to the Result object.
      */
-    void bind(Effect<T> success, Effect<String> failure);
+    public abstract void bind(Effect<T> success, Effect<String> failure);
+
+    public T getOrElse(final T defaultValue) {
+        return getOrElse(() -> defaultValue);
+    }
+
+    public abstract T getOrElse(final  Supplier<T> defaultValue);
+
+    public abstract <U> Result<U> map(Function<T, U> f);
+
+    public abstract <U> Result<U> flatMap(Function<T, Result<U>> f);
+
+    public Result<T> orElse(Supplier<Result<T>> defaultValue) {
+        return map(x -> this).getOrElse(defaultValue);
+    }
 
     /**
      * This method returns a failure instance holding the message provided.
@@ -21,8 +46,16 @@ public interface Result<T> {
      * @param <T>: Type parameter which represent the Success type, although not used here.
      * @return a Failure<T> object.
      */
-    static <T> Result<T> failure(String message) {
+    public static <T> Result<T> failure(String message) {
         return new Failure<>(message);
+    }
+
+    public static <T> Result<T> failure(Exception e) {
+        return new Failure<>(e);
+    }
+
+    public static <T> Result<T> failure(RuntimeException e) {
+        return new Failure<>(e);
     }
 
     /**
@@ -31,11 +64,11 @@ public interface Result<T> {
      * @param <T>: The type parameter of the success value.
      * @return a Success<T> object.
      */
-    static <T> Result<T> success(T value) {
+    public static <T> Result<T> success(T value) {
         return new Success<>(value);
     }
 
-    class Success<T> implements Result<T> {
+    private static class Success<T> extends Result<T> {
         private final T value;
 
         private Success(T t) {
@@ -51,15 +84,48 @@ public interface Result<T> {
         public void bind(Effect<T> success, Effect<String> failure) {
             success.apply(value);
         }
-    }
 
-    class Failure<T> implements Result<T> {
-        private final String errorMessage;
-
-        private Failure(String e) {
-            errorMessage = e;
+        @Override
+        public T getOrElse(Supplier<T> defaultValue) {
+            return value;
         }
 
+        @Override
+        public <U> Result<U> flatMap(Function<T, Result<U>> f) {
+            try {
+                return f.apply(value);
+            } catch(Exception e) {
+                return failure(e);
+            }
+        }
+
+        @Override
+        public <U> Result<U> map(Function<T, U> f) {
+            try {
+                return success(f.apply(value));
+            } catch(Exception e) {
+                return failure(e);
+            }
+        }
+    }
+
+    private static class Failure<T> extends Result<T> {
+        private final RuntimeException error;
+
+        private Failure(String e) {
+            super();
+            error = new IllegalStateException(e);
+        }
+
+        private Failure(Exception e) {
+            super();
+            error = new IllegalStateException(e.getMessage(), e);
+        }
+
+        private Failure(RuntimeException e) {
+            super();
+            error = e;
+        }
         /**
          * Failure implements bind, by applying the failure effect to the error message.
          * @param success : function to apply on successful computation, which is ignored here.
@@ -67,7 +133,22 @@ public interface Result<T> {
          */
         @Override
         public void bind(Effect<T> success, Effect<String> failure) {
-            failure.apply(errorMessage);
+            failure.apply(error.getMessage());
+        }
+
+        @Override
+        public T getOrElse(Supplier<T> defaultValue) {
+            return defaultValue.get();
+        }
+
+        @Override
+        public <U> Result<U> flatMap(Function<T, Result<U>> f) {
+            return failure(error);
+        }
+
+        @Override
+        public <U> Result<U> map(Function<T, U> f) {
+            return failure(error);
         }
     }
 }
