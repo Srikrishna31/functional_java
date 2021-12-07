@@ -67,9 +67,9 @@ public class OptionTest {
                 .put("Donald", new Toon("Donald", "Duck", "donald@disney.com"));
 
         //Below code deomonstrates Option composition through Option::flatMap
-        Option<String> mickey = toons.get("Mickey").flatMap(Toon::getEmail);
-        Option<String> minnie = toons.get("Minnie").flatMap(Toon::getEmail);
-        Option<String> goofy = toons.get("Goofy").flatMap(Toon::getEmail);
+        Option<String> mickey = toons.getOption("Mickey").flatMap(Toon::getEmail);
+        Option<String> minnie = toons.getOption("Minnie").flatMap(Toon::getEmail);
+        Option<String> goofy = toons.getOption("Goofy").flatMap(Toon::getEmail);
 
         /**
          * The problem here is that Option hides the fact that there is no data

@@ -39,6 +39,22 @@ public abstract class Result<T> implements Serializable {
 
     public abstract <U> Result<U> flatMap(Function<T, Result<U>> f);
 
+    public Result<T> filter(Function<T, Boolean> f) {
+        return filter(f, "Condition not matched");
+    }
+
+    public Result<T> filter(Function<T, Boolean> f, String message) {
+        return flatMap(t -> f.apply(t) ? this: failure(message));
+    }
+
+    public boolean exists(Function<T, Boolean> p) {
+        return map(p).getOrElse(false);
+    }
+
+    public boolean forAll(Function<T, Boolean> p) {
+        return exists(p);
+    }
+
     public Result<T> orElse(Supplier<Result<T>> defaultValue) {
         return map(x -> this).getOrElse(defaultValue);
     }
