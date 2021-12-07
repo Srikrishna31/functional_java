@@ -20,10 +20,10 @@ public class CaseTest {
     @Test
     public void testCase() {
         //TODO: Use mockito to expect correct function call here.
-        emailChecker.apply("this.is@my.email").bind(success, failure);
-        emailChecker.apply(null).bind(success, failure);
-        emailChecker.apply("").bind(success, failure);
-        emailChecker.apply("john.doe@acme.com").bind(success, failure);
+        emailChecker.apply("this.is@my.email").bind(success, failure, failure);
+        emailChecker.apply(null).bind(success, failure, failure);
+        emailChecker.apply("").bind(success, failure, failure);
+        emailChecker.apply("john.doe@acme.com").bind(success, failure, failure);
     }
 
     /**

@@ -21,10 +21,13 @@ public abstract class Result<T> implements Serializable {
      */
     private Result() {}
 
+    @SuppressWarnings("rawtypes")
+    private static Result empty = new Empty();
+
     /**
      * This method handles the effects to be applied to the Result object.
      */
-    public abstract void bind(Effect<T> success, Effect<String> failure);
+    public abstract void bind(Effect<T> success, Effect<String> failure, Effect<String> empty);
 
     public T getOrElse(final T defaultValue) {
         return getOrElse(() -> defaultValue);
@@ -58,6 +61,11 @@ public abstract class Result<T> implements Serializable {
         return new Failure<>(e);
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> Result<T> empty() {
+        return empty;
+    }
+
     /**
      * This method returns a Success instance holding the value provided.
      * @param value: Value representing successful computation.
@@ -81,7 +89,7 @@ public abstract class Result<T> implements Serializable {
          * @param failure : function to apply on failure, which is ignored here.
          */
         @Override
-        public void bind(Effect<T> success, Effect<String> failure) {
+        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
             success.apply(value);
         }
 
@@ -109,7 +117,7 @@ public abstract class Result<T> implements Serializable {
         }
     }
 
-    private static class Failure<T> extends Result<T> {
+    private static class Failure<T> extends Empty<T> {
         private final RuntimeException error;
 
         private Failure(String e) {
@@ -132,13 +140,8 @@ public abstract class Result<T> implements Serializable {
          * @param failure : function to apply on failure.
          */
         @Override
-        public void bind(Effect<T> success, Effect<String> failure) {
+        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
             failure.apply(error.getMessage());
-        }
-
-        @Override
-        public T getOrElse(Supplier<T> defaultValue) {
-            return defaultValue.get();
         }
 
         @Override
@@ -149,6 +152,43 @@ public abstract class Result<T> implements Serializable {
         @Override
         public <U> Result<U> map(Function<T, U> f) {
             return failure(error);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Failure(%s)", error.getMessage());
+        }
+    }
+
+    private static class Empty<T> extends Result<T> {
+
+        Empty() {
+            super();
+        }
+
+        @Override
+        public T getOrElse(Supplier<T> defaultValue) {
+            return defaultValue.get();
+        }
+
+        @Override
+        public String toString() {
+            return "Empty()";
+        }
+
+        @Override
+        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
+            empty.apply(toString());
+        }
+
+        @Override
+        public <U> Result<U> flatMap(Function<T, Result<U>> f) {
+            return empty();
+        }
+
+        @Override
+        public <U> Result<U> map(Function<T, U> f) {
+            return empty();
         }
     }
 }

@@ -18,8 +18,8 @@ public class Map<T, U> {
         return m;
     }
 
-    public Option<U> get(final T t) {
-        return map.containsKey(t) ? Option.some(map.get(t)) : Option.none();
+    public Result<U> get(final T t) {
+        return map.containsKey(t) ? Result.success(map.get(t)) : Result.empty();
     }
 
     public Result<U> getResult(final T t) {

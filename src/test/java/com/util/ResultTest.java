@@ -13,9 +13,17 @@ public class ResultTest {
                 .put("Minnie", new Toon("Minnie", "Mouse"))
                 .put("Donald", new Toon("Donald", "Duck", "donald@disney.com"));
 
-        assertEquals("mikey@disney.com", Toon.getName().flatMap(toons::getResult).flatMap(Toon::getEmail).getOrElse(
-                ""));
+        assertEquals("mikey@disney.com",
+                Toon.getName().flatMap(toons::getResult).flatMap(Toon::getEmail).getOrElse(""));
+        assertEquals("Failure(Input error)",
+                Toon.getFailureName().flatMap(toons::getResult).flatMap(Toon::getEmail).toString());
+        assertEquals("Failure(Key Goofy not found in map)",
+                Toon.getNameAbsentFailure().flatMap(toons::getResult).flatMap(Toon::getEmail).toString());
 
+        assertEquals("Failure(Minnie Mouse has no mail)",
+                Toon.getNameEmailFailure().flatMap(toons::getResult).flatMap(Toon::getEmail).toString());
+//        assertEquals("Empty()",
+//                Toon.getNameEmailFailure().flatMap(toons::get).flatMap(Toon::getEmail).toString());
     }
 
     private static class Toon {
