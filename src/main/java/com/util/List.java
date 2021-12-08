@@ -3,6 +3,8 @@ package com.util;
 import com.functional.TailCall;
 import com.functional.Function;
 
+import java.util.Collection;
+
 import static com.functional.TailCall.sus;
 import static com.functional.TailCall.ret;
 
@@ -218,6 +220,42 @@ public abstract class List<A> {
     public static <A> List<A> flatten(List<List<A>> aas) {
         return aas.foldRight(list(), v -> acc -> concat(v, acc));
 
+    }
+
+    /**
+     * A convenience function to turn the Java collection to functional List, which
+     * then supports all the usual functional programming operations. This method runs
+     * in O(N) time, since it loops over the collection.
+     * @param ct : The collection which needs to be converted to a list.
+     * @param <T> : Type parameter of the collection.
+     * @return the List class holding the elements from collection.
+     */
+    public static <T> List<T> fromCollection(Collection<T> ct) {
+        var list = List.<T>list();
+
+        for(final T t : ct) {
+            list.cons(t);
+        }
+
+        return list.reverse();
+    }
+
+    /**
+     * A function which returns the first element that satisfies the given predicate.
+     * @param p : The predicate which is applied for each element in the list.
+     * @return the Result object encapsulating the element if the predicate returns
+     * true for an element or return an empty object otherwise.
+     */
+    public Result<A> first(Function<A, Boolean> p) {
+        class FirstHelper {
+            TailCall<Result<A>> go(List<A> ls) {
+                return ls.isEmpty() ? ret(Result.<A>failure("Empty list")) : p.apply(ls.head()) ?
+                                            ret(Result.success(ls.head())) :
+                                            sus(() -> go(ls.tail()));
+            }
+        }
+
+        return new FirstHelper().go(this).eval();
     }
 
     private static class Nil<A> extends List<A> {

@@ -15,6 +15,7 @@ java_library(
         "main/java/com/functional/Tuple3.java",
         "main/java/com/functional/Tuple4.java",
         "main/java/com/functional/Tuple5.java",
+        "main/java/com/misc/MemoryMonitor.java",
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/Either.java",
         "main/java/com/util/List.java",

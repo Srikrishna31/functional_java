@@ -7,12 +7,16 @@ import java.util.function.Supplier;
 import java.io.Serializable;
 
 /**
- * This class handles the results of a computation, and allows to bind further
- * computations on those resutls.
- * It provides two subclasses: Success and Failure, which encapsulate the corresponding
- * cases. The Failure class encapsulates an exception, which can capture the entire
- * error that could have occurred in a computation. A failure message (which could be
- * a string) is also stored in an IllegalStateException.
+ * This class handles the results of a computation, and allows binding further
+ * computations on those results.
+ * It provides three subclasses: Success, Failure, and Empty which encapsulate the
+ * corresponding cases. The Failure class encapsulates an exception, which can
+ * capture the entire error that could have occurred in a computation. A failure
+ * message (which could be a string) is also stored in an IllegalStateException.
+ * Success class encapsulates the result of successful computation, which can
+ * then further be combined with other computations.
+ * Empty class encapsulates the absence of data, which is not exactly a failure,
+ * and it acts akin to Option.none().
  * The way to instantiate them is through static methods provided and not directly.
  */
 public abstract class Result<T> implements Serializable {
@@ -54,6 +58,12 @@ public abstract class Result<T> implements Serializable {
     public boolean forAll(Function<T, Boolean> p) {
         return exists(p);
     }
+
+    public abstract Result<T> mapFailure(String e);
+
+    public abstract Result<T> mapFailure(String s, Exception e);
+
+    public abstract Result<T> mapEmpty(String e);
 
     public Result<T> orElse(Supplier<Result<T>> defaultValue) {
         return map(x -> this).getOrElse(defaultValue);
@@ -131,6 +141,21 @@ public abstract class Result<T> implements Serializable {
                 return failure(e);
             }
         }
+
+        @Override
+        public Result<T> mapFailure(String s) {
+            return this;
+        }
+
+        @Override
+        public Result<T> mapEmpty(String e) {
+            return  this;
+        }
+
+        @Override
+        public Result<T> mapFailure(String s, Exception e) {
+            return this;
+        }
     }
 
     private static class Failure<T> extends Empty<T> {
@@ -174,6 +199,16 @@ public abstract class Result<T> implements Serializable {
         public String toString() {
             return String.format("Failure(%s)", error.getMessage());
         }
+
+        @Override
+        public Result<T> mapFailure(String s) {
+            return mapFailure(s, error);
+        }
+
+        @Override
+        public Result<T> mapFailure(String s, Exception e) {
+            return failure(new IllegalStateException(s, e));
+        }
     }
 
     private static class Empty<T> extends Result<T> {
@@ -205,6 +240,21 @@ public abstract class Result<T> implements Serializable {
         @Override
         public <U> Result<U> map(Function<T, U> f) {
             return empty();
+        }
+
+        @Override
+        public Result<T> mapFailure(String s) {
+            return this;
+        }
+
+        @Override
+        public Result<T> mapFailure(String s, Exception e) {
+            return this;
+        }
+
+        @Override
+        public Result<T> mapEmpty(String s) {
+            return failure(new IllegalStateException(s));
         }
     }
 }
