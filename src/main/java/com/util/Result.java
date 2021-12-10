@@ -30,41 +30,144 @@ public abstract class Result<T> implements Serializable {
 
     /**
      * This method handles the effects to be applied to the Result object.
+     * @param success : The effect to be applied if the value is a success object.
      */
-    public abstract void bind(Effect<T> success, Effect<String> failure, Effect<String> empty);
+    public abstract void forEach(Effect<T> success);
+
+    /**
+     * This method applies the effect to the success value, and throws an
+     * exception, stored in the failure object and does nothing for an empty
+     * object.
+     * @param ef : The effect to be applied to the success value.
+     */
+    public abstract void forEachOrThrow(Effect<T> ef);
+
+    /**
+     * This function applies the effect to the successful value, and if the object is
+     * of failure it will return a Success<RuntimeException>.
+     * If the value is Success or Empty, then an Empty object is returned.
+     * @param ef : The effect to be applied to the successful value of the result.
+     * @return Empty if the value is Success / Empty, Success<RuntimeException> otherwise.
+     */
+    public abstract Result<RuntimeException> forEachOrException(Effect<T> ef);
+
 
     public T getOrElse(final T defaultValue) {
         return getOrElse(() -> defaultValue);
     }
 
+    /**
+     * A method which returns the underlying value if the object is of type
+     * Success, otherwise, returns the value returned by the Supplier.
+     * The parameter is a Supplier to facilitate lazy evaluation, which happens
+     * only when the object is of None type.
+     * @param defaultValue : The supplier function which returns a default value.
+     * @return the underlying value or the supplied default value as the case may be.
+     */
     public abstract T getOrElse(final  Supplier<T> defaultValue);
 
+    /**
+     * This method transforms a result of type Result<T> to a result of type Result<U>,
+     * by applying the given function to the element of the Result.
+     * If the Result object is Empty or Failure, then this method is a no-op.
+     * @param f : The function to be applied to each element of the list.
+     * @param <U> : The type into which the function maps the element.
+     * @return the transformed result containing the element of type U.
+     */
     public abstract <U> Result<U> map(Function<T, U> f);
 
+    /**
+     * This function is a generalization of map. The parameter function here returns a result
+     * of element, rather than a raw value. The flatMap then flattens the result into a single
+     * result container. If the Result object is Empty or Failure, then this method is a no-op.
+     * @param f : The function which produces a Result<U> for the element of Result<T>.
+     * @param <U> : The type parameter of mapped result.
+     * @return the result of object of type B.
+     */
     public abstract <U> Result<U> flatMap(Function<T, Result<U>> f);
 
-    public Result<T> filter(Function<T, Boolean> f) {
-        return filter(f, "Condition not matched");
+
+    /**
+     * This function applies a predicate to the element and returns the Success
+     * object, if the containing element matches the criterion. Otherwise, it
+     * returns a Failure object.
+     * @param p : The predicate to be applied to the element in Success object.
+     * @return the Success object if predicate returns true, Failure otherwise.
+     */
+    public Result<T> filter(Function<T, Boolean> p) {
+        return filter(p, "Condition not matched");
     }
 
-    public Result<T> filter(Function<T, Boolean> f, String message) {
-        return flatMap(t -> f.apply(t) ? this: failure(message));
+    /**
+     * This function applies a predicate to the element and returns the Success
+     * object, if the containing element matches the criterion. Otherwise, it
+     * returns a Failure object, with the message provided.
+     * @param p : The predicate to be applied to the element in Success object.
+     * @return the Success object if predicate returns true, Failure otherwise.
+     */
+    public Result<T> filter(Function<T, Boolean> p, String message) {
+        return flatMap(t -> p.apply(t) ? this: failure(message));
     }
 
+    /**
+     * This function returns true if the object is of Success type, and the
+     * predicate returns true, false otherwise.
+     * @param p : The predicate to be applied to the value in success object.
+     * @return true if the predicate returns true for the value in Success
+     * object, false otherwise.
+     */
     public boolean exists(Function<T, Boolean> p) {
         return map(p).getOrElse(false);
     }
 
+    /**
+     * This is an alias to exists function.
+     * @param p
+     * @return
+     */
     public boolean forAll(Function<T, Boolean> p) {
         return exists(p);
     }
 
+    /**
+     * This function maps the failure object, into another failure object,
+     * using the string provided. This function is a noop for Success and Empty
+     * objects.
+     * @param e : The message which needs to be encapsulated in the new object.
+     * @return the transformed failure object if the original object was a
+     * failure object, otherwise this.
+     */
     public abstract Result<T> mapFailure(String e);
 
+    /**
+     * This function maps the failure object, into another failure object,
+     * using the exception provided. This function is a noop for Success and Empty
+     * objects.
+     * @param e : The exception which needs to be encapsulated in the new object.
+     * @return the transformed failure object if the original object was a
+     * failure object, otherwise this.
+     */
     public abstract Result<T> mapFailure(String s, Exception e);
+
+    /**
+     * This function maps the empty object, into failure object,
+     * using the string provided. This function is a noop for Success and Failure
+     * objects.
+     * @param e : The message which needs to be encapsulated in the new object.
+     * @return the transformed failure object if the original object was a
+     * empty object, otherwise this.
+     */
 
     public abstract Result<T> mapEmpty(String e);
 
+
+    /**
+     * This function returns the other object if this object is not a success
+     * object. Otherwise it returns this object.
+     * @param defaultValue : The supplier function, which will be evaluated in
+     *                     case this object is not a success object.
+     * @return this object if it is a Success object, otherwise the default value.
+     */
     public Result<T> orElse(Supplier<Result<T>> defaultValue) {
         return map(x -> this).getOrElse(defaultValue);
     }
@@ -83,15 +186,41 @@ public abstract class Result<T> implements Serializable {
         return new Failure<>(e);
     }
 
-    public static <T> Result<T> failure(RuntimeException e) {
-        return new Failure<>(e);
-    }
-
     @SuppressWarnings("unchecked")
     public static <T> Result<T> empty() {
         return empty;
     }
 
+    public static <T> Result<T> of(T value) {
+        return of(value, "Null value");
+    }
+
+    public static <T> Result<T> of(T value, String message) {
+        return value == null ? failure(message) : success(value);
+    }
+
+    /**
+     * A convenience funtion to turn the result of a computation into a result object.
+     * If the function returns true, then the supplied value is encapsulated into a
+     * result object, otherwise an empty object is returned. If an exception is throwsn
+     * during the evaluation of the function, then a failure is returned.
+     * @param p : Predicate to be applied to value.
+     * @param value : The value which needs to be encapsulated.
+     * @param message : The Message which should be used for the failure case.
+     * @param <T> : Type parameter of the value argument.
+     * @return the Result object.
+     */
+    public static <T> Result<T> of(Function<T, Boolean> p, T value, String message) {
+        try {
+            return p.apply(value) ? success(value) : empty();
+        } catch (Exception e) {
+            return failure(new IllegalStateException(message, e));
+        }
+    }
+
+    public static <T> Result<T> of(Function<T, Boolean> p, T value) {
+        return of(p, value, String.format("Exception while evaluating predicate: %s", value));
+    }
     /**
      * This method returns a Success instance holding the value provided.
      * @param value: Value representing successful computation.
@@ -100,6 +229,39 @@ public abstract class Result<T> implements Serializable {
      */
     public static <T> Result<T> success(T value) {
         return new Success<>(value);
+    }
+
+
+    /**
+     * This method transforms a function operating on A -> B into a function operating
+     * on Result<A> to Result<B>.
+     * @param f : The function which transforms an A into a B.
+     * @param <A> : Type parameter of input.
+     * @param <B> : Type parameter of output.
+     * @return : The function accepting an object of type Result<A> and returning
+     * an object of Result<B>.
+     */
+    public static <A, B> Function<Result<A>, Result<B>> lift(Function<A, B> f) {
+        return a -> {
+            try {
+                return a.map(f);
+            } catch (Exception e) {
+                return failure(e);
+            }
+        };
+    }
+
+    public static <A,B,C> Function<Result<A>, Function<Result<B>, Result<C>>> lift2(Function<A, Function<B, C>> f) {
+        return a -> b -> a.map(f).flatMap(b::map);
+    }
+
+    public static <A,B,C,D> Function<Result<A>, Function<Result<B>, Function<Result<C>, Result<D>>>> lift3(
+            Function<A, Function<B, Function<C, D>>> f) {
+        return a -> b -> c -> a.map(f).flatMap(b::map).flatMap(c::map);
+    }
+
+    public static <A, B, C> Result<C> map2(Result<A> a, Result<B> b, Function<A, Function<B, C>> f) {
+        return lift2(f).apply(a).apply(b);
     }
 
     private static class Success<T> extends Result<T> {
@@ -112,11 +274,21 @@ public abstract class Result<T> implements Serializable {
         /**
          * Success implements bind, by applying the success effect to the value.
          * @param success : function to apply on successful computation.
-         * @param failure : function to apply on failure, which is ignored here.
          */
         @Override
-        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
+        public void forEach(Effect<T> success) {
             success.apply(value);
+        }
+
+        @Override
+        public void forEachOrThrow(Effect<T> f) {
+            forEach(f);
+        }
+
+        @Override
+        public Result<RuntimeException> forEachOrException(Effect<T> f) {
+            forEach(f);
+            return empty();
         }
 
         @Override
@@ -175,15 +347,6 @@ public abstract class Result<T> implements Serializable {
             super();
             error = e;
         }
-        /**
-         * Failure implements bind, by applying the failure effect to the error message.
-         * @param success : function to apply on successful computation, which is ignored here.
-         * @param failure : function to apply on failure.
-         */
-        @Override
-        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
-            failure.apply(error.getMessage());
-        }
 
         @Override
         public <U> Result<U> flatMap(Function<T, Result<U>> f) {
@@ -209,6 +372,16 @@ public abstract class Result<T> implements Serializable {
         public Result<T> mapFailure(String s, Exception e) {
             return failure(new IllegalStateException(s, e));
         }
+
+        @Override
+        public void forEachOrThrow(Effect<T> ef) {
+            throw error;
+        }
+
+        @Override
+        public Result<RuntimeException> forEachOrException(Effect<T> f) {
+            return success(error);
+        }
     }
 
     private static class Empty<T> extends Result<T> {
@@ -228,9 +401,7 @@ public abstract class Result<T> implements Serializable {
         }
 
         @Override
-        public void bind(Effect<T> success, Effect<String> failure, Effect<String> empty) {
-            empty.apply(toString());
-        }
+        public void forEach(Effect<T> success) {  }
 
         @Override
         public <U> Result<U> flatMap(Function<T, Result<U>> f) {
@@ -255,6 +426,14 @@ public abstract class Result<T> implements Serializable {
         @Override
         public Result<T> mapEmpty(String s) {
             return failure(new IllegalStateException(s));
+        }
+
+        @Override
+        public void forEachOrThrow(Effect<T> ef) { }
+
+        @Override
+        public Result<RuntimeException> forEachOrException(Effect<T> f) {
+            return empty();
         }
     }
 }

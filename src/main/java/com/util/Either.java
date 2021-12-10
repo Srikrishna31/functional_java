@@ -3,6 +3,13 @@ package com.util;
 import com.functional.Function;
 import java.util.function.Supplier;
 
+/**
+ * A utility class that defines the Failure and Success of computation. By
+ * convention, Right indicates the presence or success of a computation, wherease
+ * Left indicates the absence or failure of a computation.
+ * @param <E> : Type parameter for Error (could be string or exception)
+ * @param <A> : Type parameter of Success value.
+ */
 public abstract class Either<E,A> {
     private Either() {}
 

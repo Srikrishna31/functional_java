@@ -185,20 +185,21 @@ public abstract class List<A> {
     }
 
     /**
-     * This functon applies a predicate to each element and returns the list of
+     * This function applies a predicate to each element and returns the list of
      * elements that match the criterion. The runtime of this function is O(2n),
      * since there is a reversing of the list.
-     * @param p : The predicate to be applied to each function.
+     * @param p : The predicate to be applied to each element of the list.
      * @return the list of values for which the predicate returned true.
      */
     public List<A> filter(Function<A, Boolean> p) {
-        return foldRight(list(), v -> acc -> p.apply(v) ? acc.cons(v) : acc);
+        return foldLeft(List.<A>list(), acc -> v -> p.apply(v) ? acc.cons(v) : acc).reverse();
+//        return foldRight(list(), v -> acc -> p.apply(v) ? acc.cons(v) : acc);
     }
 
     /**
-     * This function is a generalization of map. The function here returns a list
-     * of elements, rather than a signle element, for each application. The flatMap
-     * then flattens the list into a single list. The runtime of this function
+     * This function is a generalization of map. The input function here returns a list
+     * of elements, rather than a single element, for each application. The flatMap
+     * then flattens the list of lists into a single list. The runtime of this function
      * could be O(n2), since it needs to traverse the list for each invocation.
      * @param f : The function which produces a List<B> for each element of List<A>.
      * @param <B> : The type parameter of mapped result.
