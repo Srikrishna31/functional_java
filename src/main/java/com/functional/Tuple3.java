@@ -35,5 +35,10 @@ public class Tuple3 <T,U,V> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "( " + _1.toString() + ", " + _2.toString() + ", " + _3.toString() + " )";
+    }
+
     public static <T,U,V> Tuple3<T,U,V> create(T t, U u, V v) {return new Tuple3<>(t,u,v); }
 }

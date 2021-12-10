@@ -7,6 +7,7 @@ import com.functional.TailCall;
 import static com.functional.TailCall.sus;
 import static com.functional.TailCall.ret;
 
+import com.functional.Tuple;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
@@ -137,6 +138,42 @@ public class ListTest {
         System.out.println(res);
 
         assertEquals(res.toString(), "Failure(Random)");
+    }
+
+    @Test
+    public void zipWith() {
+        var l2 = list("1", "2", "3", "4", "5", "6", "7", "8", "9");
+
+        var res = List.zipWith(l1, l2, i -> s -> Tuple.create(i, s));
+
+        System.out.println(res.toString());
+    }
+
+    @Test
+    public void unzip() {
+        var l = list(Tuple.create(1, "a"),
+                Tuple.create(2, "b"),
+                Tuple.create(3, "c"));
+        var res = List.unzip(l);
+
+        System.out.println(res.toString());
+
+        assertEquals(res._1.toString() , list(1,2,3).toString());
+        assertEquals(res._2.toString(), list("a", "b", "c").toString());
+    }
+
+    @Test
+    public void product() {
+        var l1 = list(1, 2, 3);
+        var l2 = list(4,5,6);
+
+        var res = List.product(l1, l2);
+
+        System.out.println(res);
+
+        assertEquals(res.toString(), list(Tuple.create(1,4), Tuple.create(1, 5), Tuple.create(1, 6),
+                Tuple.create(2, 4), Tuple.create(2, 5), Tuple.create(2, 6),
+                Tuple.create(3, 4), Tuple.create(3, 5), Tuple.create(3, 6)).toString());
     }
 }
 

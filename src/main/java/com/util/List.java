@@ -2,6 +2,7 @@ package com.util;
 
 import com.functional.TailCall;
 import com.functional.Function;
+import com.functional.Tuple;
 
 import static com.util.Result.empty;
 import static com.util.Result.success;
@@ -299,7 +300,8 @@ public abstract class List<A> {
      * or failure otherwise.
      */
     public static <A> Result<List<A>> sequence(List<Result<A>> lrs) {
-        return lrs.foldRight(success(list()), v -> acc -> Result.map2(v, acc, a -> b -> b.cons(a)));
+        return traverse(lrs, x -> x);
+        //return lrs.foldRight(success(list()), v -> acc -> Result.map2(v, acc, a -> b -> b.cons(a)));
     }
 
     /**
@@ -314,7 +316,107 @@ public abstract class List<A> {
      */
     public static <A,B> Result<List<B>> traverse(List<A> ls, Function<A, Result<B>> f) {
         return ls.foldRight(success(list()), v -> acc -> acc.flatMap(rs -> f.apply(v).map(u -> rs.cons(u))));
+//        return ls.foldRight(success(list()), v -> acc -> Result.map2(f.apply(v), acc, a -> b -> b.cons(a)));
     }
+
+    /**
+     * This method combines the elements of two lists of different types to produce a new list, given
+     * a function argument. This function runs for the shortest list length, and ignores the remaining
+     * elements in the longer list.
+     * @param as : The list of elements of type A.
+     * @param bs : The list of elements of type B.
+     * @param f : A curried function that accepts arguments of a, b and produces c.
+     * @param <A> : Type parameter of elements in the first list.
+     * @param <B> : Type parameter of elements in the second list.
+     * @param <C> : Type parameter of elements in the result list.
+     * @return the list of elements of type C, which are obtained by applying the function on the
+     * pair of elements of input lists.
+     */
+    public static <A,B,C> List<C> zipWith(List<A> as, List<B> bs, Function<A, Function<B, C>> f) {
+        class ZipHelper {
+            TailCall<List<C>> go(List<A> as, List<B> bs, List<C> cs) {
+                if (as.isEmpty() || bs.isEmpty()) {
+                    return ret(cs);
+                } else {
+                    return go(as.tail(), bs.tail(), cs.cons(f.apply(as.head()).apply(bs.head())));
+                }
+            }
+        }
+
+        return new ZipHelper().go(as, bs, list()).eval().reverse();
+    }
+
+    /**
+     * This function combines the elements of two lists of different types into a list of Tuple of a, b.
+     * This function is similar to zipWith, except that, it simply joins the corresponding elements into
+     * a tuple.
+     * @param as : The list of elements of type A.
+     * @param bs : The list of elements of type B.
+     * @param <A> : Type parameter of elements in the first list.
+     * @param <B> : Type parameter of elements in the second list.
+     * @return the list of elements of Tuple<A, B>.
+     */
+    public static <A, B> List<Tuple<A, B>> zip(List<A> as, List<B> bs) {
+        return zipWith(as, bs, a -> b -> Tuple.create(a, b));
+    }
+
+    /**
+     * This function creates a cartesian product of two lists, and applies a function
+     * that takes the arguments a, b and produces a c.
+     * @param as : The list of elements of type A.
+     * @param bs : The list of elements of type B.
+     * @param f : A curried function that accepts arguments of a, b and produces c.
+     * @param <A> Type parameter of elements in the first list.
+     * @param <B> : Type parameter of elements in the second list.
+     * @param <C> : Type parameter of elements in the result list.
+     * @return the list of elements of type C, obtained by applying the function to each
+     * pair of (a,b) values.
+     */
+    public static <A, B, C> List<C> productWith(List<A> as, List<B> bs, Function<A, Function<B, C>> f) {
+        return as.flatMap(a -> bs.map(b -> f.apply(a).apply(b)));
+    }
+
+    /**
+     * This function creates a cartesian product of two lists, and returns a list of pairs(tuple).
+     * @param as : The list of elements of type A.
+     * @param bs : The list of elements of type B.
+     * @param <A> : Type parameter of elements in the first list.
+     * @param <B> : Type parameter of elements in the second list.
+     * @return the list of tuple of (a, b).
+     */
+    public static <A, B> List<Tuple<A,B>> product(List<A> as, List<B> bs) {
+        return productWith(as, bs, a -> b -> Tuple.create(a, b));
+    }
+
+    /**
+     * This function is opposite of zip. It separates the list of Tuples into a Tuple of Lists.
+     * @param abs : list of tuple of a, b.
+     * @param <A> : Type parameter of first element in the tuple.
+     * @param <B> : Type parameter of second element in the tuple.
+     * @return the tuple of lists of type A and type B.
+     */
+    public static <A, B> Tuple<List<A>, List<B>> unzip(List<Tuple<A, B>> abs) {
+        return abs.foldRight(Tuple.create(list(), list()), v -> acc -> Tuple.create(acc._1.cons(v._1),
+                acc._2.cons(v._2)));
+    }
+
+    /**
+     * This is a generalization of unzip, which applies a function that takes a single element
+     * and returns a tuple of b, c, which are then returned in two separate lists.
+     * @param as : List of elements of type A.
+     * @param f : A function that produces a tuple from a single value.
+     * @param <A> : Type parameter of elements in the input list.
+     * @param <B> : Type parameter of first element of the resultant tuple.
+     * @param <C> : Type parameter of second element of the resultant tuple.
+     * @return the Tuple of List<B> and List<C>.
+     */
+    public static <A, B, C> Tuple<List<B>, List<C>> unzipWith(List<A> as, Function<A, Tuple<B, C>> f) {
+        return as.foldRight(Tuple.create(list(), list()), v -> acc -> {
+            var t = f.apply(v);
+            return Tuple.create(acc._1.cons(t._1), acc._2.cons(t._2));
+        });
+    }
+
     private static class Nil<A> extends List<A> {
         private Nil() {}
 

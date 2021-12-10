@@ -43,6 +43,12 @@ public class Tuple5 <A,B,C, D, E> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "( " + _1.toString() + ", " + _2.toString() + ", " + _3.toString() + ", " + _4.toString() + ", " + _5.toString() +
+        " )";
+    }
+
     public static <A,B,C,D, E> Tuple5<A,B,C,D, E> create(A a, B b, C c, D d, E e) {
         return new Tuple5<>(a, b, c, d, e);
     }

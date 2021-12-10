@@ -39,6 +39,12 @@ public class Tuple4 <A,B,C, D> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "( " + _1.toString() + ", " + _2.toString() + ", " + _3.toString() + ", " + _4.toString() + " )";
+    }
+
+
     public static <A,B,C,D> Tuple4<A,B,C,D> create(A a, B b, C c, D d) {
         return new Tuple4<>(a, b, c, d);
     }

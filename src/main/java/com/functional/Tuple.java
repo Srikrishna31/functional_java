@@ -55,4 +55,8 @@ public class Tuple<T,U> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "( " + _1.toString() + ", " + _2.toString() + " )";
+    }
 }
