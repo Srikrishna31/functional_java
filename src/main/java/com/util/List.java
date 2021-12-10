@@ -3,10 +3,14 @@ package com.util;
 import com.functional.TailCall;
 import com.functional.Function;
 
-import java.util.Collection;
+import static com.util.Result.empty;
+import static com.util.Result.success;
+import static com.util.Result.failure;
 
 import static com.functional.TailCall.sus;
 import static com.functional.TailCall.ret;
+
+import java.util.Collection;
 
 /**
  * A functional list that supports all the functional operations on a list.
@@ -25,9 +29,26 @@ public abstract class List<A> {
 
     /**
      * Returns the first or head element of the list.
+     * Throws an exception if called on the Nil object.
      * @return the first element from the list.
      */
     public abstract A head();
+
+    /**
+     * Returns the first or head element of the list, wrapped in a Result object.
+     * If the Object is Nil, then it is encapsulated in a Failure object.
+     * @return the Result object holding the value or exception.
+     */
+    public abstract Result<A> headOption();
+
+    /**
+     * Returns the last element int he list, wrapped in a Result object.
+     * If the list is Nil, an Empty object is returned.
+     * @return a Result object, which could be a Success or an Empty object.
+     */
+    public Result<A> lastOption() {
+        return foldLeft(empty(), acc -> Result::success);
+    }
 
     /**
      * Returns the tail (or rest) of the list.
@@ -39,7 +60,6 @@ public abstract class List<A> {
      * @return true if the list is empty or false otherwise.
      */
     public abstract boolean isEmpty();
-
 
     /**
      * Returns a new list with the head element set to the
@@ -150,9 +170,7 @@ public abstract class List<A> {
     /**
      * @return Returns the number of elements in the list.
      */
-    public int length() {
-        return foldLeft(0, acc -> v -> acc + 1);
-    }
+    public abstract int length();
 
     /**
      * Reverses the order of the elements and returns a new list.
@@ -259,6 +277,44 @@ public abstract class List<A> {
         return new FirstHelper().go(this).eval();
     }
 
+    /**
+     * This function flattens a list of results into a result of list object. This
+     * function will ignore failures and empty objects, and returns only the list
+     * of successful objects.
+     * @param lrs : The list of result objects of type A.
+     * @param <A> : The type parameter of the encapsulated objects.
+     * @return the result of list of encapsulated objects.
+     */
+    public static <A> Result<List<A>> flattenResult(List<Result<A>> lrs) {
+        return lrs.foldRight(success(list()), v -> acc -> acc.flatMap(ls -> v.map(el -> ls.cons(el))));
+    }
+
+    /**
+     * This function flattens a list of results into a result of list object. This
+     * function returns a Success object, only if all the elements in the list are
+     * success objects. Otherwise, it returns a failure object.
+     * @param lrs : The list of result objects of type A.
+     * @param <A> : The type parameter of the encapsulated objects.
+     * @return the result of list of encapsulated objects if all are success objects,
+     * or failure otherwise.
+     */
+    public static <A> Result<List<A>> sequence(List<Result<A>> lrs) {
+        return lrs.foldRight(success(list()), v -> acc -> Result.map2(v, acc, a -> b -> b.cons(a)));
+    }
+
+    /**
+     * This is a more generic function,that applies a function to each element of the
+     * list producing a result object. Finally, this method transforms the list of result
+     * objects into a result of list objects.
+     * @param ls : The list of elements to traverse.
+     * @param f : The function that takes a parameter of type A, and returns a result object of type B.
+     * @param <A> : Type parameter of input list.
+     * @param <B> : Type parameter of the output of the function and the output result list objects.
+     * @return the result of list of objects of type B.
+     */
+    public static <A,B> Result<List<B>> traverse(List<A> ls, Function<A, Result<B>> f) {
+        return ls.foldRight(success(list()), v -> acc -> acc.flatMap(rs -> f.apply(v).map(u -> rs.cons(u))));
+    }
     private static class Nil<A> extends List<A> {
         private Nil() {}
 
@@ -279,15 +335,25 @@ public abstract class List<A> {
         public List<A> setHead(A a) {
             throw new IllegalStateException("setHead called on empty list");
         }
+
+        @Override
+        public int length() { return 0; }
+
+        @Override
+        public Result<A> headOption() {
+            return failure("head called on empty list.");
+        }
     }
 
     private static class Cons<A> extends List<A> {
         private final A head;
+        private final int length;
         private final List<A> tail;
 
         private Cons(A head, List<A> tail) {
             this.head = head;
             this.tail = tail;
+            this.length = tail.length() + 1;
         }
 
         @Override
@@ -302,6 +368,14 @@ public abstract class List<A> {
         @Override
         public List<A> setHead(A a) {
             return new Cons<>(a, tail);
+        }
+
+        @Override
+        public int length() { return length; }
+
+        @Override
+        public Result<A> headOption() {
+            return success(head);
         }
     }
 

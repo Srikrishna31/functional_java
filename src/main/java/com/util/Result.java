@@ -172,6 +172,12 @@ public abstract class Result<T> implements Serializable {
         return map(x -> this).getOrElse(defaultValue);
     }
 
+    public abstract boolean isSuccess();
+
+    public abstract boolean isEmpty();
+
+    public abstract boolean isFailure();
+
     /**
      * This method returns a failure instance holding the message provided.
      * @param message : Error message describing the condition.
@@ -328,6 +334,21 @@ public abstract class Result<T> implements Serializable {
         public Result<T> mapFailure(String s, Exception e) {
             return this;
         }
+
+        @Override
+        public boolean isSuccess() {
+            return true;
+        }
+
+        @Override
+        public boolean isFailure() {
+            return false;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
     }
 
     private static class Failure<T> extends Empty<T> {
@@ -382,6 +403,16 @@ public abstract class Result<T> implements Serializable {
         public Result<RuntimeException> forEachOrException(Effect<T> f) {
             return success(error);
         }
+
+        @Override
+        public boolean isFailure() {
+            return true;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
     }
 
     private static class Empty<T> extends Result<T> {
@@ -434,6 +465,21 @@ public abstract class Result<T> implements Serializable {
         @Override
         public Result<RuntimeException> forEachOrException(Effect<T> f) {
             return empty();
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return false;
+        }
+
+        @Override
+        public boolean isFailure() {
+            return false;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return true;
         }
     }
 }

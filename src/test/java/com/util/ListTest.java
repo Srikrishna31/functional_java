@@ -108,5 +108,35 @@ public class ListTest {
 
         assertEquals(list(1,2,3,4,5).toString(), res.toString());
     }
+
+    @Test
+    public void testLastOption() {
+        var res = l1.lastOption();
+
+        System.out.println(res);
+
+        assertEquals(res.getOrElse(0), Integer.valueOf(9));
+    }
+
+    @Test
+    public void testFlattenListResult() {
+        var l = List.list(Result.success(1), Result.success(3), Result.success(3));
+        var res = List.flattenResult(l);
+
+        System.out.println(res.toString());
+
+        assertEquals(res.getOrElse(list()).toString(), list(1,3,3).toString());
+    }
+
+    @Test
+    public void testSequence() {
+        var l = list(Result.success(1), Result.<Integer>failure("Random"), Result.success(2));
+
+        var res = List.sequence(l);
+
+        System.out.println(res);
+
+        assertEquals(res.toString(), "Failure(Random)");
+    }
 }
 
