@@ -114,7 +114,7 @@ public class ListTest {
     public void testLastOption() {
         var res = l1.lastOption();
 
-        System.out.println(res);
+        System.out.println(res.getOrElse(0));
 
         assertEquals(res.getOrElse(0), Integer.valueOf(9));
     }
@@ -124,7 +124,7 @@ public class ListTest {
         var l = List.list(Result.success(1), Result.success(3), Result.success(3));
         var res = List.flattenResult(l);
 
-        System.out.println(res.toString());
+        System.out.println(res.getOrElse(list()));
 
         assertEquals(res.getOrElse(list()).toString(), list(1,3,3).toString());
     }
@@ -135,13 +135,13 @@ public class ListTest {
 
         var res = List.sequence(l);
 
-        System.out.println(res);
+        System.out.println(res.getOrElse(list()));
 
         assertEquals(res.toString(), "Failure(Random)");
     }
 
     @Test
-    public void zipWith() {
+    public void testZipWith() {
         var l2 = list("1", "2", "3", "4", "5", "6", "7", "8", "9");
 
         var res = List.zipWith(l1, l2, i -> s -> Tuple.create(i, s));
@@ -150,7 +150,7 @@ public class ListTest {
     }
 
     @Test
-    public void unzip() {
+    public void testUnzip() {
         var l = list(Tuple.create(1, "a"),
                 Tuple.create(2, "b"),
                 Tuple.create(3, "c"));
@@ -163,7 +163,7 @@ public class ListTest {
     }
 
     @Test
-    public void product() {
+    public void testProduct() {
         var l1 = list(1, 2, 3);
         var l2 = list(4,5,6);
 
@@ -174,6 +174,16 @@ public class ListTest {
         assertEquals(res.toString(), list(Tuple.create(1,4), Tuple.create(1, 5), Tuple.create(1, 6),
                 Tuple.create(2, 4), Tuple.create(2, 5), Tuple.create(2, 6),
                 Tuple.create(3, 4), Tuple.create(3, 5), Tuple.create(3, 6)).toString());
+    }
+
+    @Test
+    public void testGetAt() {
+        var res = l1.getAt(5);
+
+        System.out.println(res.getOrElse(0));
+
+        assertEquals(res.getOrElse(0), Integer.valueOf(6));
+
     }
 }
 

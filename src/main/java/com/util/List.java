@@ -145,18 +145,102 @@ public abstract class List<A> {
     }
 
     /**
+     * This overload supports early termination of the fold, if the zero element matches
+     * with the accumulator.
+     * @param identity : The identity of the operation. This will be returned if the input
+     *                 list is empty.
+     * @param zeroElement : The absorbing element of the computation.
+     * @param f : Accumulating function, which is a curried function, which accepts a parameter of type B, and
+     *           returns a function that accepts a parameter of type A and returns a B.
+     * @param <B> : The type of reduction element.
+     * @return the reduced type object.
+     */
+    public <B> B foldLeft(B identity, B zeroElement, Function<B, Function<A, B>> f) {
+        class FoldHelper {
+            TailCall<B> go(List<A> ls, B acc) {
+                return ls.isEmpty() || acc.equals(zeroElement) ? ret(acc) : sus(() -> go(ls.tail(),
+                        f.apply(acc).apply(ls.head())));
+            }
+        }
+
+        return new FoldHelper().go(this, identity).eval();
+    }
+
+    /**
+     * This is a more general overload supports early termination of the fold based on
+     * the predicate, which accepts both the accumulator(intermediate result) and the current
+     * element. If it returns true, then the fold is terminated immediately. This
+     * obviates the need to find a zero element, and also design any custom condition for
+     * which the fold must be terminated early.
+     * @param identity: The identity of the operation. This will be returned if the input
+     *                 is empty.
+     * @param p : The predicate which accepts the current accumulator and the current
+     *          element and returns a boolean
+     * @param f : Accumulating function, which is a curried function, which accepts a
+     *          parameter of type B, and returns a function that accepts a parameter
+     *          of type A and returns a B.
+     * @param <B> : The type of reduction element.
+     * @return the reduced element.
+     */
+    public <B> B foldLeft(B identity, Function<B, Function<A, Boolean>> p, Function<B, Function<A, B>> f) {
+        class FoldHelper {
+            TailCall<B> go(List<A> ls, B acc) {
+                return ls.isEmpty() || p.apply(acc).apply(ls.head()) ? ret(acc) : sus(() -> go(ls.tail(),
+                        f.apply(acc).apply(ls.head())));
+            }
+        }
+
+        return new FoldHelper().go(this, identity).eval();
+    }
+
+    /**
      * Another general purpose function which can be used to turn the list into any other type.
      * This function operates on the list from right to left, applying the accumulating operator
      * on the right, and the accumulating value on the left(for each element of the list).
      * @param identity : The identity element of the operation. This will be returned if the
      *                 input list is empty.
-     * @param f : Accumulationg function that takes a parameter of type A, and returns a function
+     * @param f : Accumulating function that takes a parameter of type A, and returns a function
      *          that takes a parameter of type B and returns a B.
      * @param <B> : The type of reduction element.
      * @return the reduced type object.
      */
     public <B> B foldRight(B identity, Function<A, Function<B, B>> f) {
         return reverse().foldLeft(identity, acc -> v -> f.apply(v).apply(acc));
+    }
+
+    /**
+     * This overload supports early termination of the fold, if the zero element matches
+     * with the accumulator.
+     * @param identity : The identity of the operation. This will be returned if the input
+     *                 list is empty.
+     * @param zeroElement : The absorbing element of the computation.
+     * @param f : Accumulating function that takes a parameter of type A, and returns a function
+     *          that takes a parameter of type B and returns a B.
+     * @param <B> : The type of reduction element.
+     * @return the reduced type object.
+     */
+    public <B> B foldRight(B identity, B zeroElement, Function<A, Function<B, B>> f) {
+        return reverse().foldLeft(identity, zeroElement, acc -> v -> f.apply(v).apply(acc));
+    }
+
+    /**
+     * This is a more general overload supports early termination of the fold based on
+     * the predicate, which accepts both the accumulator(intermediate result) and the current
+     * element. If it returns true, then the fold is terminated immediately. This
+     * obviates the need to find a zero element, and also design any custom condition for
+     * which the fold must be terminated early.
+     * @param identity: The identity of the operation. This will be returned if the input
+     *                 is empty.
+     * @param p : The predicate which accepts the current accumulator and the current
+     *          element and returns a boolean
+     * @param f : Accumulating function, which is a curried function, which accepts a
+     *          parameter of type A, and returns a function that accepts a parameter
+     *          of type B and returns a B.
+     * @param <B> : The type of reduction element.
+     * @return the reduced element.
+     */
+    public <B> B foldRight(B identity, Function<B, Function<A, Boolean>> p, Function<A, Function<B, B>> f) {
+        return reverse().foldLeft(identity, p, (Function<B, Function<A, B>>) acc -> v -> f.apply(v).apply(acc));
     }
 
     /**
@@ -415,6 +499,18 @@ public abstract class List<A> {
             var t = f.apply(v);
             return Tuple.create(acc._1.cons(t._1), acc._2.cons(t._2));
         });
+    }
+
+    public Result<A> getAt(int index) {
+        class GetHelper{
+            TailCall<Result<A>> go(List<A> as, int index) {
+                return index == 0 ? ret(success(as.head())) : sus(() -> go(as.tail(), index - 1));
+            }
+        }
+
+        return index < 0 || index > length()  ? failure("Index out of bounds") :
+                new GetHelper().go(this, index).eval();
+
     }
 
     private static class Nil<A> extends List<A> {
