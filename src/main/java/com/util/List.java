@@ -3,6 +3,7 @@ package com.util;
 import com.functional.TailCall;
 import com.functional.Function;
 import com.functional.Tuple;
+import com.functional.Tuple3;
 
 import static com.util.Result.empty;
 import static com.util.Result.success;
@@ -146,19 +147,21 @@ public abstract class List<A> {
 
     /**
      * This overload supports early termination of the fold, if the zero element matches
-     * with the accumulator.
+     * with the accumulator. In addition, it returns the remaining list as the second
+     * result for any further processing.
      * @param identity : The identity of the operation. This will be returned if the input
      *                 list is empty.
      * @param zeroElement : The absorbing element of the computation.
      * @param f : Accumulating function, which is a curried function, which accepts a parameter of type B, and
      *           returns a function that accepts a parameter of type A and returns a B.
      * @param <B> : The type of reduction element.
-     * @return the reduced type object.
+     * @return the tuple of reduced type object and the remaining list elements.
      */
-    public <B> B foldLeft(B identity, B zeroElement, Function<B, Function<A, B>> f) {
+    public <B> Tuple<B, List<A>> foldLeft(B identity, B zeroElement, Function<B, Function<A, B>> f) {
         class FoldHelper {
-            TailCall<B> go(List<A> ls, B acc) {
-                return ls.isEmpty() || acc.equals(zeroElement) ? ret(acc) : sus(() -> go(ls.tail(),
+            TailCall<Tuple<B, List<A>>> go(List<A> ls, B acc) {
+                return ls.isEmpty() || acc.equals(zeroElement) ? ret(Tuple.create(acc, ls)) :
+                        sus(() -> go(ls.tail(),
                         f.apply(acc).apply(ls.head())));
             }
         }
@@ -171,7 +174,8 @@ public abstract class List<A> {
      * the predicate, which accepts both the accumulator(intermediate result) and the current
      * element. If it returns true, then the fold is terminated immediately. This
      * obviates the need to find a zero element, and also design any custom condition for
-     * which the fold must be terminated early.
+     * which the fold must be terminated early. In addition, it returns the remaining list
+     * as the second result for any further processing.
      * @param identity: The identity of the operation. This will be returned if the input
      *                 is empty.
      * @param p : The predicate which accepts the current accumulator and the current
@@ -180,12 +184,14 @@ public abstract class List<A> {
      *          parameter of type B, and returns a function that accepts a parameter
      *          of type A and returns a B.
      * @param <B> : The type of reduction element.
-     * @return the reduced element.
+     * @return the tuple of reduced type object and the remaining list elements.
      */
-    public <B> B foldLeft(B identity, Function<B, Function<A, Boolean>> p, Function<B, Function<A, B>> f) {
+    public <B> Tuple<B, List<A>> foldLeft(B identity, Function<B, Function<A, Boolean>> p,
+                                        Function<B, Function<A, B>> f) {
         class FoldHelper {
-            TailCall<B> go(List<A> ls, B acc) {
-                return ls.isEmpty() || p.apply(acc).apply(ls.head()) ? ret(acc) : sus(() -> go(ls.tail(),
+            TailCall<Tuple<B, List<A>>> go(List<A> ls, B acc) {
+                return ls.isEmpty() || p.apply(acc).apply(ls.head()) ? ret(Tuple.create(acc,  ls)) :
+                        sus(() -> go(ls.tail(),
                         f.apply(acc).apply(ls.head())));
             }
         }
@@ -210,16 +216,17 @@ public abstract class List<A> {
 
     /**
      * This overload supports early termination of the fold, if the zero element matches
-     * with the accumulator.
+     * with the accumulator. In addition, it returns the remaining list
+     * as the second result for any further processing.
      * @param identity : The identity of the operation. This will be returned if the input
      *                 list is empty.
      * @param zeroElement : The absorbing element of the computation.
      * @param f : Accumulating function that takes a parameter of type A, and returns a function
      *          that takes a parameter of type B and returns a B.
      * @param <B> : The type of reduction element.
-     * @return the reduced type object.
+     * @return the tuple of reduced type object and the remaining list elements.
      */
-    public <B> B foldRight(B identity, B zeroElement, Function<A, Function<B, B>> f) {
+    public <B> Tuple<B, List<A>> foldRight(B identity, B zeroElement, Function<A, Function<B, B>> f) {
         return reverse().foldLeft(identity, zeroElement, acc -> v -> f.apply(v).apply(acc));
     }
 
@@ -228,7 +235,8 @@ public abstract class List<A> {
      * the predicate, which accepts both the accumulator(intermediate result) and the current
      * element. If it returns true, then the fold is terminated immediately. This
      * obviates the need to find a zero element, and also design any custom condition for
-     * which the fold must be terminated early.
+     * which the fold must be terminated early. In addition, it returns the remaining list
+     * as the second result for any further processing.
      * @param identity: The identity of the operation. This will be returned if the input
      *                 is empty.
      * @param p : The predicate which accepts the current accumulator and the current
@@ -237,9 +245,10 @@ public abstract class List<A> {
      *          parameter of type A, and returns a function that accepts a parameter
      *          of type B and returns a B.
      * @param <B> : The type of reduction element.
-     * @return the reduced element.
+     * @return the tuple of reduced type object and the remaining list elements.
      */
-    public <B> B foldRight(B identity, Function<B, Function<A, Boolean>> p, Function<A, Function<B, B>> f) {
+    public <B> Tuple<B, List<A>> foldRight(B identity,
+    Function<B, Function<A, Boolean>> p, Function<A, Function<B, B>> f) {
         return reverse().foldLeft(identity, p, (Function<B, Function<A, B>>) acc -> v -> f.apply(v).apply(acc));
     }
 
@@ -501,6 +510,13 @@ public abstract class List<A> {
         });
     }
 
+    /**
+     * This function returns the element at the given position.
+     * If the list is short, or the index is out of range, then it returns a
+     * failure object.
+     * @param index : The position from which element is to be fetched.
+     * @return the Result object encapsulating the element or failure.
+     */
     public Result<A> getAt(int index) {
         class GetHelper{
             TailCall<Result<A>> go(List<A> as, int index) {
@@ -511,6 +527,30 @@ public abstract class List<A> {
         return index < 0 || index > length()  ? failure("Index out of bounds") :
                 new GetHelper().go(this, index).eval();
 
+    }
+
+    /**
+     * This function splits the list at the given index, and returns a tuple
+     * containing the two parts.
+     * @param index : The index at which to split the list.
+     * @return the tuple containing the two sub lists.
+     */
+    public Tuple<List<A>, List<A>> splitAt(int index) {
+        if (index < 0) {
+            return Tuple.create(list(), this);
+        }
+
+        if (index > length()) {
+            return Tuple.create(this, list());
+        }
+
+        var identity = Tuple.create(List.<A>list(), index);
+        Tuple<Tuple<List<A>, Integer>, List<A>> res = foldLeft(identity,
+                (Function<Tuple<List<A>, Integer>, Function<A, Boolean>>) acc -> v -> acc._2 == 0,
+                (Function<Tuple<List<A>, Integer>, Function<A, Tuple<List<A>, Integer>>>) acc -> v -> acc._2 >= 0 ?
+                                                                           Tuple.create(acc._1.cons(v), acc._2 - 1) :
+                                                                           acc);
+        return Tuple.create(res._1._1.reverse(), res._2);
     }
 
     private static class Nil<A> extends List<A> {

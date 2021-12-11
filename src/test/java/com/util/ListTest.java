@@ -185,5 +185,15 @@ public class ListTest {
         assertEquals(res.getOrElse(0), Integer.valueOf(6));
 
     }
+
+    @Test
+    public void testSplitAt() {
+        var res = l1.splitAt(5);
+
+        System.out.println(res);
+
+        assertEquals(list(1,2,3,4,5).toString(), res._1.toString());
+        assertEquals(list(6,7,8,9).toString(), res._2.toString());
+    }
 }
 
