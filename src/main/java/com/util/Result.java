@@ -270,6 +270,10 @@ public abstract class Result<T> implements Serializable {
         return lift2(f).apply(a).apply(b);
     }
 
+    public <U> U fold(U identity, Function<U, Function<T, U>> f) {
+        return map(v -> f.apply(identity).apply(v)).getOrElse(identity);
+    }
+
     private static class Success<T> extends Result<T> {
         private final T value;
 

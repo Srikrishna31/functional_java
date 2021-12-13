@@ -553,6 +553,119 @@ public abstract class List<A> {
         return Tuple.create(res._1._1.reverse(), res._2);
     }
 
+    /**
+     * A function which returns true if a list starts with the provided sublist,
+     * false otherwise.
+     * @param list : The list in which to see the sublist for.
+     * @param sub : The sublist which should be checked against the main list.
+     * @param <A> : Type parameter of the elements.
+     * @return true if the sublist is contained in the beginning of the list,
+     * false otherwise.
+     */
+    public static <A> Boolean startsWith(List<A> list, List<A> sub) {
+        class StartsWithHelper {
+            TailCall<Boolean> go(List<A> list, List<A> sub) {
+                return sub.isEmpty() ? ret(true)
+                                    : list.isEmpty() ? ret(false)
+                                                    : list.head().equals(sub.head()) ? sus(() -> go(list.tail(), sub.tail()))
+                                                                                     : ret(false);
+            }
+        }
+
+        return new StartsWithHelper().go(list, sub).eval();
+    }
+
+    /**
+     * This function searches for the provided sublist in a list, and returns true
+     * if it finds it, false otherwise.
+     * @param list : The list in which to search the sublist.
+     * @param sub : The sublist to search for.
+     * @param <A> : Type parameter of the elements.
+     * @return true if the sublist is contained in the list, false otherwise.
+     */
+    public static <A> Boolean hasSubList(List<A> list, List<A> sub) {
+        class HasSubListHelper {
+            TailCall<Boolean> go(List<A> list) {
+                return list.isEmpty() ? ret(sub.isEmpty()) : startsWith(list, sub) ? ret(true) :
+                        sus(() -> go(list.tail()));
+            }
+        }
+
+        return new HasSubListHelper().go(list).eval();
+    }
+
+    /**
+     * This method accepts a function from A to B, and returns a Map, where keys
+     * are the result of the function applied to each element of the list and
+     * values are lists of elements corresponding to each key.
+     * @param f : The function that maps an A into a B.
+     * @param <B> : Type parameter of the keys.
+     * @return a Map containing the list elements grouped by keys, as provided
+     * by the function.
+     */
+    public <B> Map<B, List<A>> groupBy(Function<A, B> f) {
+        return foldLeft(Map.empty(), acc -> a -> {
+            final var res = f.apply(a);
+            return acc.put(res, acc.get(res).getOrElse(list()).cons(a));
+        });
+    }
+
+    /**
+     * This function takes a starting element (seed), and a function from S to
+     * Result<Tuple<A, S>> and produces a List<A> by successively applying f
+     * to the S value as long as the result is a Success.
+     * @param seed : The element with which to start the list.
+     * @param f : The function to apply to the seed element to produce the next
+     *          element.
+     * @param <A> : Type parameter of the elements of the list.
+     * @param <S> : Type parameter of the seed elements.
+     * @return the list of values of type A.
+     */
+    public static <A, S> List<A> unfold(S seed, Function<S, Result<Tuple<A, S>>> f) {
+        class UnfoldHelper {
+            TailCall<Result<List<A>>> go(S seed, List<A> ls) {
+                var res = f.apply(seed);
+                Result<TailCall<Result<List<A>>>> result = res.map(rt -> sus(() -> go(rt._2, ls.cons(rt._1))));
+
+                return result.getOrElse(ret(success(ls)));
+            }
+        }
+
+        return new UnfoldHelper().go(seed, list()).eval().getOrElse(list()).reverse();
+    }
+
+    /**
+     * A function which can be used to produce a list of integers in a given range.
+     * 
+     * @param start : The element from which to start counting.
+     * @param end : The element before which to include in the list.
+     * @return the list of integers that lie between start and end.
+     */
+    public static List<Integer> range(int start, int end) {
+        return unfold(start, i -> i < end ? success(Tuple.create(i, i + 1)) : empty());
+    }
+
+    /**
+     * This function applies the given predicate to each element, until it returns
+     * true. If none of the elements return true, then the result is false.
+     * @param p : the predicate to be applied to each element of the list.
+     * @return true if predicate returns true for an element, false otherwise.
+     */
+    public boolean exists(Function<A, Boolean> p) {
+        return foldLeft(false, true, acc -> v -> acc || p.apply(v))._1;
+    }
+
+    /**
+     * This function applies the given predicate to each element, and returns true
+     * if and only if the predicate returns true for all the elements, otherwise
+     * returns false.
+     * @param p : The predicated to be applied to each element of the list.
+     * @return true if predicate is true for all elements, false otherwise.
+     */
+    public boolean forAll(Function<A, Boolean> p) {
+        return foldLeft(true, false, acc -> v -> acc && p.apply(v))._1;
+    }
+
     private static class Nil<A> extends List<A> {
         private Nil() {}
 

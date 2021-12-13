@@ -10,6 +10,7 @@ import static com.functional.TailCall.ret;
 import com.functional.Tuple;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ListTest {
     private final List<Integer> l1 = list(1,2,3,4,5,6,7,8,9);
@@ -194,6 +195,43 @@ public class ListTest {
 
         assertEquals(list(1,2,3,4,5).toString(), res._1.toString());
         assertEquals(list(6,7,8,9).toString(), res._2.toString());
+    }
+
+    @Test
+    public void testStartsWith() {
+        var res = startsWith(l1, list(1,2,3));
+
+        assertTrue(res);
+    }
+
+    @Test
+    public void testHasSubList() {
+        var res = hasSubList(l1, list(5,6,7));
+
+        assertTrue(res);
+    }
+
+    @Test
+    public void testUnfold() {
+        var l2 = unfold(1, i -> i < 10 ? Result.success(Tuple.create(i,i + 1)) : Result.empty());
+
+        System.out.println(l2.toString());
+
+        assertEquals(l1.toString(), l2.toString());
+    }
+
+    @Test
+    public void testExists() {
+        var res = l1.exists(i -> i == 5);
+
+        assertTrue(res);
+    }
+
+    @Test
+    public void testForAll() {
+        var res = l1.forAll(i -> i > 0);
+
+        assertTrue(res);
     }
 }
 
