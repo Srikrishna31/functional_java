@@ -9,6 +9,12 @@ import static com.functional.TailCall.ret;
 
 import com.functional.Tuple;
 import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -233,5 +239,40 @@ public class ListTest {
 
         assertTrue(res);
     }
+
+
+    @Test
+    public void testDivide() {
+        var res = l1.divide(2);
+
+        var res1 = l1.divide(4);
+        System.out.println("Divided lists:" + res.toString());
+        System.out.println("More divided lists: " + res1.toString());
+
+        assertEquals(list(list(1, 2, 3, 4), list(5, 6, 7, 8, 9)).toString(), res.toString());
+        assertEquals(list(list(1,2), list(3,4), list(5,6), list(7,8,9)).toString(), res1.toString());
+    }
+
+    @Test
+    public void testParFold() {
+        int testLimit = 35000;
+        int numThreads = 8;
+        Random rd = new Random();
+
+        List<Integer> testList = unfold(0, i -> i < testLimit ? Result.success(Tuple.create(0, i +1)) :
+                Result.empty()).map(v -> (int)(Math.random() * 100));
+
+        //Result<BigInteger> result
+    }
+
+    @Test
+    public void testParMap() {
+        ExecutorService es = Executors.newFixedThreadPool(8);
+        var res = l1.parMap(es, v -> v *30);
+
+        assertEquals(list(30,60,90,120,150,180,210,240,270).toString(), res.getOrElse(list()).toString());
+    }
+
+    //TOOD: Write benchhmark tests for Parallel fold and parallel map.
 }
 

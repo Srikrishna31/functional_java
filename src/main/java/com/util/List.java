@@ -3,7 +3,6 @@ package com.util;
 import com.functional.TailCall;
 import com.functional.Function;
 import com.functional.Tuple;
-import com.functional.Tuple3;
 
 import static com.util.Result.empty;
 import static com.util.Result.success;
@@ -13,6 +12,8 @@ import static com.functional.TailCall.sus;
 import static com.functional.TailCall.ret;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A functional list that supports all the functional operations on a list.
@@ -554,6 +555,18 @@ public abstract class List<A> {
     }
 
     /**
+     * This function does the same job as splitAt, except in the return value it
+     * provides a list of lists, instead of a tuple of lists.
+     * @param index : the index at which to split the list.
+     * @return the list containing two lists split around the index.
+     */
+    public List<List<A>> splitListAt(int index) {
+        var res = splitAt(index);
+
+        return list(res._1, res._2);
+    }
+
+    /**
      * A function which returns true if a list starts with the provided sublist,
      * false otherwise.
      * @param list : The list in which to see the sublist for.
@@ -666,6 +679,71 @@ public abstract class List<A> {
         return foldLeft(true, false, acc -> v -> acc && p.apply(v))._1;
     }
 
+    /**
+     * Given a depth value, this function divides the list into a number of sublists.
+     * At each level, the list is divided into two halves, and this is done recursively
+     * until the depth becomes less than 2. This function is useful for parallel
+     * processing.
+     * @param depth : The number of levels deep the list subdivision should continue for.
+     * @return the list of lists of elements of type A.
+     */
+    public List<List<A>> divide(int depth) {
+        class DivideHelper {
+            TailCall<List<List<A>>> go(List<List<A>> lls, int depth) {
+                return lls.head().length() < depth || depth < 2 ? ret(lls) :
+                        sus (() -> go(lls.flatMap(ls -> ls.splitListAt(ls.length() / 2)), depth  / 2));
+            }
+        }
+
+        return isEmpty() ? list(this) : new DivideHelper().go(list(this), depth).eval();
+    }
+
+    /**
+     * Given an Executor Service, this function divides the list into chunks and applies
+     * the function in parallel. Since it applies the function in parallel, it also needs
+     * a function to combine the intermediate results, which may or may not be the same
+     * operation. In terms of functionality, this function is identical to foldLeft, unless
+     * the operation being applied is not commutative.
+     * @param es : The ExecutorService to use for submitting the parallel jobs.
+     * @param identity : The identity element for the fold operation.
+     * @param f : The accumulator function to be applied to each element and the accumulator.
+     * @param m : The combining function, which combines intermediate results from the parallel
+     *          jobs.
+     * @param <B> : The type parameter of the resulting fold value.
+     * @return the folded value.
+     */
+    public <B> Result<B> parFoldLeft(ExecutorService es, B identity, Function<B,Function<A, B>> f,
+                             Function<B, Function<B, B>> m) {
+        final int chunks = 1024;
+        final var dList  = divide(chunks);
+
+        try {
+            List<B> intermediateResult = dList.map(ls -> es.submit(() -> ls.reverse().foldLeft(identity, f))).map( x -> {
+                try {
+                    return x.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            return success(intermediateResult.foldLeft(identity, m));
+        } catch (Exception e) {
+            return failure(e);
+        }
+    }
+
+    /**
+     * This is the parallel version of the map function, analogous to parallel fold in its
+     * implementation.
+     * @param es : The executor service to use for submitting the parallel jobs.
+     * @param f : The function which maps an A to a B.
+     * @param <B> : The type parameter of the result of applying f.
+     * @return the mapped list of values of type B.
+     */
+    public <B> Result<List<B>> parMap(ExecutorService es, Function<A, B> f) {
+        return parFoldLeft(es, list(), acc -> v -> acc.cons(f.apply(v)), l1 -> l2 -> concat(l1, l2));
+    }
+
     private static class Nil<A> extends List<A> {
         private Nil() {}
 
@@ -740,6 +818,7 @@ public abstract class List<A> {
      * To solve this problem, we use a singleton empty list with no parameter
      * type. This generates a compiler warning. In order to restrict this
      * warning to the List class and not let it leak to the List users, you
+     *
      * don't give direct access to the singleton. That's why there's a (parameterized)
      * static method to access the singleton, and a @SuppressWarnings("rawtypes")
      * on the NIL property, as well as @SuppressWarnings("unchecked") on the
@@ -773,3 +852,4 @@ public abstract class List<A> {
         return new ListHelper().go(list(), as.length - 1).eval();
     }
 }
+
