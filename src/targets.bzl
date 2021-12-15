@@ -14,4 +14,5 @@ TARGETS = [
     ("option", "test/java/com/util/OptionTest.java", "com.util.OptionTest"),
     ("either", "test/java/com/util/EitherTest.java", "com.util.EitherTest"),
     ("result", "test/java/com/util/ResultTest.java", "com.util.ResultTest"),
+    ("stream", "test/java/com/lazy/StreamTest.java", "com.lazy.StreamTest"),
 ]
