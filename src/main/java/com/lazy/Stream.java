@@ -1,6 +1,7 @@
 package com.lazy;
 
 import com.functional.TailCall;
+import com.functional.Tuple;
 import com.util.Result;
 import static com.util.Result.failure;
 import static com.util.Result.success;
@@ -211,6 +212,70 @@ public abstract class Stream<A> {
      */
     public <B> Stream<B> flatMap(Function<A, Stream<B>> f) {
         return foldRight(Stream::empty, a -> acc -> f.apply(a).append(acc));
+    }
+
+    /**
+     * Find a particular element, which is determined by the predicate provided.
+     * @param p : The predicate which returns a boolean for each element applied,
+     *          returning true if the element matches the criteria, false otherwise.
+     * @return the element if found, otherwise an empty.
+     */
+    public Result<A> find(Function<A, Boolean> p) {
+        return filter(p).headOption();
+    }
+
+    /**
+     * This function creates a stream of infinite repetitions of the given
+     * element.
+     * @param a : The element which needs to be repeated.
+     * @param <A> : Type parameter of the element to be repeeated.
+     * @return the stream of repeating elements of a.
+     */
+    public static <A> Stream<A> repeat(A a) {
+        return cons(() -> a, () -> repeat(a));
+    }
+
+    /**
+     * This method generalizes from and repeat methods, by taking a seed element
+     * which is used as the first value, and applying the supplied function to
+     * generate the subsequent values.
+     * @param seed : The starting element.
+     * @param f : Function which takes the current value, and produces the next
+     *          element.
+     * @param <A> : Type paramter of the elements.
+     * @return the stream of generated elements.
+     */
+    public static <A> Stream<A> iterate(A seed, Function<A, A> f) {
+        return cons(() -> seed, () -> iterate(f.apply(seed), f));
+    }
+
+    /**
+     * This overload takes a supplier of the seed value, and then applies the
+     * provided function to generate the subsequent values.
+     * @param seed : the supplier providing the starter element.
+     * @param f : The function which takes the current value, and produces the
+     *          next element.
+     * @param <A> : Type parameter of the elements.
+     * @return the stream of generated elements.
+     */
+    public static <A> Stream<A> iterate(Supplier<A> seed, Function<A, A> f) {
+        return cons(seed, () -> iterate(f.apply(seed.get()), f));
+    }
+
+    /**
+     * This is the most general form of the iterate/repeat method, which takes
+     * a seed element, and a generating function, which provides the seed for
+     * generating the subsequent element, and also the next element. Getting
+     * and empty result will mark the end of the stream.
+     * @param z : The starting value of the stream.
+     * @param f : Function which takes the current seed, and returns a result
+     *          producing a tuple of seed, and next element.
+     * @param <A> : The type parameter of the elements.
+     * @param <S> : The type parameter of the seed element.
+     * @return the stream of elements of type A.
+     */
+    public static <A, S> Stream<A> unfold(S z, Function<S, Result<Tuple<A, S>>> f) {
+        return f.apply(z).map(r -> Stream.cons(() -> r._1, unfold(r._2, f))).getOrElse(empty());
     }
 
     private Stream() {}

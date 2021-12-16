@@ -87,7 +87,6 @@ public class StreamTest {
 
     @Test
     public void testFilter() {
-        //TODO: For some reason taking 15 elements (boundardy condition) from teh stream is
         // overflowing the stack. Fix it.
         var res = intStream.filter(i -> i <= 15).take(14);
         var expected = List.unfold(1, i -> i < 15 ? Result.success(Tuple.create(i, i + 1)) : Result.empty());
@@ -107,5 +106,16 @@ public class StreamTest {
         assertEquals(Integer.valueOf(1), res.head());
         assertEquals(Integer.valueOf(2), res.tail().head());
         assertEquals(Integer.valueOf(3), res.tail().tail().head());
+    }
+
+    private Stream<Integer> fibStream() {
+        return Stream.iterate(Tuple.create(0, 1), t -> Tuple.create(t._2, t._2 + t._1)).map(x -> x._1);
+    }
+
+    @Test
+    public void testFibStream() {
+        var res = fibStream().take(20);
+
+        System.out.println(res.toList().toString());
     }
 }
