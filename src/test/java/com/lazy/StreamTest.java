@@ -112,10 +112,18 @@ public class StreamTest {
         return Stream.iterate(Tuple.create(0, 1), t -> Tuple.create(t._2, t._2 + t._1)).map(x -> x._1);
     }
 
+    private Stream<Integer> fibStreamWithUnfold() {
+        return Stream.unfold(Tuple.create(0, 1),  t -> Result.success(Tuple.create(t._1,
+                Tuple.create(t._2, t._2 + t._1))));
+    }
+
     @Test
     public void testFibStream() {
         var res = fibStream().take(20);
 
+        var res2 = fibStreamWithUnfold().take(20);
         System.out.println(res.toList().toString());
+
+        assertEquals(res.toList().toString(), res2.toList().toString());
     }
 }

@@ -275,7 +275,7 @@ public abstract class Stream<A> {
      * @return the stream of elements of type A.
      */
     public static <A, S> Stream<A> unfold(S z, Function<S, Result<Tuple<A, S>>> f) {
-        return f.apply(z).map(r -> Stream.cons(() -> r._1, unfold(r._2, f))).getOrElse(empty());
+        return f.apply(z).map(r -> Stream.cons(() -> r._1, () -> unfold(r._2, f))).getOrElse(empty());
     }
 
     private Stream() {}
@@ -368,12 +368,23 @@ public abstract class Stream<A> {
         return new Cons<>(hd, tl);
     }
 
+    /**
+     * Method to create an empty stream.
+     * @param <A> : Type parameter to which the empty stream must conform to.
+     * @return the empty stream of the provided type parameter.
+     */
     @SuppressWarnings("unchecked")
     public static <A> Stream<A> empty() {
         return EMPTY;
     }
 
+    /**
+     * A convenience method to generate a sequence of numbers starting from a given
+     * number.
+     * @param i : The starting value.
+     * @return the stream of contiguous integers from the starting value.
+     */
     public static Stream<Integer> from (int i) {
-        return cons(() -> i, () -> from(i + 1));
+        return unfold(i, j -> Result.success(Tuple.create(j, j + 1)));
     }
 }
