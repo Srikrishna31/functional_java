@@ -28,6 +28,8 @@ import java.util.function.Supplier;
  * Empty class denotes empty stream, and throws exception when head or tail is
  * called on it.
  * Cons class represents a list with unevaluated head and tail elements.
+ * Some of the functions can lead to non-terminating prgrams, if applied to infinite
+ * streams.
  * @param <A>
  */
 public abstract class Stream<A> {
@@ -56,7 +58,9 @@ public abstract class Stream<A> {
      * @return the result object which could be a success object, if the Stream
      * is a Cons object, otherwise, it is a failure object.
      */
-    public abstract Result<A> headOption();
+    public Result<A> headOption() {
+        return foldRight(Result::empty, a -> sa -> success(a));
+    }
 
     /**
      * This method converts the stream to a list of values. This means, the
@@ -125,7 +129,89 @@ public abstract class Stream<A> {
      * @param p : The predicate to be applied to each element of the stream.
      * @return The truncated Stream object, based on the provided predicate.
      */
-    public abstract Stream<A> takeWhile(Function<A, Boolean> p);
+    public Stream<A> takeWhile(Function<A, Boolean> p) {
+        return foldRight(Stream::empty, a -> sa -> p.apply(a) ? cons(() -> a, sa) : empty());
+    }
+
+    /**
+     * This method evaluates the elements of the stream, until the predicate returns
+     * true for an element.
+     * @param p : The predicate which returns a boolean for each element of the stream.
+     * @return true, if an element is found, false otherwise.
+     */
+    public boolean exists(Function<A, Boolean> p) {
+        class ExistsHelper {
+            TailCall<Boolean> go(Stream<A> ss) {
+                return ss.isEmpty() || p.apply(ss.head()) ? ret(true) : sus(() -> go(ss.tail()));
+            }
+        }
+
+        return new ExistsHelper().go(this).eval();
+    }
+
+    /**
+     * A general purpose function which can be used to turn the stream into any other type.
+     * This function operates on the stream from left to right, applying the accumulating operator
+     * on the right, and the accumulating value on the left(for each element of the stream).
+     * @param identity : The identity of the operation. This will be returned if the
+     *                 input stream is empty.
+     * @param f : Accumulating function, which is a curried function, which accepts a parameter of type A, and
+     *          returns a function that accepts a parameter of Supplier of B and returns a B.
+     * @param <B> : The type of reduction element.
+     * @return the reduced type object.
+     *
+     * Note that it may not be possible to do a foldLeft on the stream, since it inverts the direction of operation
+     * and would need the stream to be reversed, and would not complete on infinite streams.
+     * Also note that, the foldRight implementation is not stack safe, meaning that, it might throw
+     * StackOverflowException for streams with elements larger than 10000 elements. For more
+     * information, refer here: https://github.com/fpinjava/fpinjava/issues/12
+     */
+    public abstract <B> B foldRight(Supplier<B> identity, Function<A, Function<Supplier<B>, B>> f);
+
+    /**
+     * This function turns the stream of type A into a stream of type B.
+     * @param f : The function which maps a type from A to B.
+     * @param <B> : Type parameter of the return type of the function.
+     * @return the stream of type B.
+     */
+    public <B> Stream<B> map(Function<A, B> f) {
+        return foldRight(Stream::empty, a -> acc -> cons(() -> f.apply(a), acc));
+    }
+
+    /**
+     * This function filters (removes), the elements from the stream, as long as
+     * the given predicate is false for a particular element, and allows only those
+     * elements in the stream for which the predicate returns true.
+     * @param p : The predicate which returns a boolean for each element.
+     * @return the filtered stream, which contains elements that satisfy the given
+     * predicate.
+     */
+    public Stream<A> filter(Function<A, Boolean> p) {
+        return foldRight(Stream::empty, a -> acc -> p.apply(a) ? cons(() -> a, acc) : acc.get());
+    }
+
+    /**
+     * This function is equivalent to concat on lists. This one returns the elements
+     * of the other stream, once the elements from this stream are exhausted.
+     * @param that : The other stream, that needs to be added to the end of this stream.
+     * @return a stream that contains both the streams.
+     */
+    public Stream<A> append(Supplier<Stream<A>> that) {
+        return foldRight(that, a -> acc -> cons(() -> a, acc));
+    }
+
+    /**
+     * This function is a generalization of map. The input function here returns a stream
+     * of elements, rather than a single element, for each application. The flatMap
+     * then flattens the stream of streams into a single stream. The runtime of this function
+     * could be O(n2), since it needs to traverse the stream for each invocation.
+     * @param f : The function which produces a Stream<B> for each element of Stream<A>.
+     * @param <B> : The type parameter of mapped result.
+     * @return the stream of objects of type B.
+     */
+    public <B> Stream<B> flatMap(Function<A, Stream<B>> f) {
+        return foldRight(Stream::empty, a -> acc -> f.apply(a).append(acc));
+    }
 
     private Stream() {}
 
@@ -146,18 +232,13 @@ public abstract class Stream<A> {
         }
 
         @Override
-        public Result<A> headOption() {
-            return failure("head called on empty stream");
-        }
-
-        @Override
         public Stream<A>  take(int n) {
             return this;
         }
 
         @Override
-        public Stream<A> takeWhile(Function<A, Boolean> p) {
-            return this;
+        public <B> B foldRight(Supplier<B> identity, Function<A, Function<Supplier<B>, B>> f) {
+            return identity.get();
         }
     }
 
@@ -194,18 +275,15 @@ public abstract class Stream<A> {
         }
 
         @Override
-        public Result<A> headOption() {
-            return success(head());
-        }
-
-        @Override
         public Stream<A> take(int n) {
             return n <= 0 ? empty() : cons(head, () -> tail().take(n - 1));
         }
 
         @Override
-        public Stream<A> takeWhile(Function<A, Boolean> p) {
-            return p.apply(head()) ? cons(head, () -> tail().takeWhile(p)) : empty();
+        public <B> B foldRight(Supplier<B> identity, Function<A, Function<Supplier<B>, B>> f) {
+            //Its really a challenge to implement a stack safe version of foldRight,
+            //or its next to impossible.
+            return f.apply(head()).apply(() -> tail().foldRight(identity, f));
         }
     }
 
