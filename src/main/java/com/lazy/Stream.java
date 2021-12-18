@@ -40,7 +40,7 @@ public abstract class Stream<A> {
      * Evaluate and return the head element of the stream.
      * @return the head element of the stream.
      */
-    public abstract A head();
+    public abstract A  head();
 
     /**
      * @return the tail of the stream.
@@ -108,7 +108,7 @@ public abstract class Stream<A> {
     public Stream<A> dropWhile(Function<A, Boolean> p) {
         class DropHelper{
             TailCall<Stream<A>> go(Stream<A> ss) {
-                return ss.isEmpty() ||  p.apply(ss.head()) ? ret(ss) : sus(() -> go(ss.tail()));
+                return ss.isEmpty() ||  p.apply(ss.head()) ?  sus(() -> go(ss.tail())) : ret(ss);
             }
         }
 
@@ -188,7 +188,9 @@ public abstract class Stream<A> {
      * predicate.
      */
     public Stream<A> filter(Function<A, Boolean> p) {
-        return foldRight(Stream::empty, a -> acc -> p.apply(a) ? cons(() -> a, acc) : acc.get());
+        var stream = dropWhile(x -> !p.apply(x));
+
+        return stream.isEmpty() ? empty() : cons(stream::head, () -> stream.tail().filter(p));
     }
 
     /**
@@ -316,6 +318,13 @@ public abstract class Stream<A> {
         private Cons(Supplier<A> h, Supplier<Stream<A>> t) {
             head = h;
             tail = t;
+            this.h = null;
+        }
+
+        private Cons(A h, Supplier<Stream<A>> t) {
+            head = () -> h;
+            tail = t;
+            this.h = h;
         }
 
         @Override
@@ -323,6 +332,7 @@ public abstract class Stream<A> {
             if (h == null) {
                 h = head.get();
             }
+
             return h;
         }
 
