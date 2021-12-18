@@ -21,9 +21,9 @@ public class StreamTest {
         System.out.println(intStream.tail().head());
         System.out.println(intStream.tail().tail().head());
 
-        assertEquals(Integer.valueOf(1), intStream.head());
-        assertEquals(Integer.valueOf(2), intStream.tail().head());
-        assertEquals(Integer.valueOf(3), intStream.tail().tail().head());
+        assertEquals(Integer.valueOf(1), intStream.head()._1);
+        assertEquals(Integer.valueOf(2), intStream.tail().head()._1);
+        assertEquals(Integer.valueOf(3), intStream.tail().tail().head()._1);
     }
 
     @Test
@@ -103,9 +103,9 @@ public class StreamTest {
 
         var res = stream.flatMap(x -> Stream.from(x).take(3));
 
-        assertEquals(Integer.valueOf(1), res.head());
-        assertEquals(Integer.valueOf(2), res.tail().head());
-        assertEquals(Integer.valueOf(3), res.tail().tail().head());
+        assertEquals(Integer.valueOf(1), res.head()._1);
+        assertEquals(Integer.valueOf(2), res.tail().head()._1);
+        assertEquals(Integer.valueOf(3), res.tail().tail().head()._1);
     }
 
     private Stream<Integer> fibStream() {

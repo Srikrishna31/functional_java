@@ -40,7 +40,7 @@ public abstract class Stream<A> {
      * Evaluate and return the head element of the stream.
      * @return the head element of the stream.
      */
-    public abstract A  head();
+    public abstract Tuple<A, Stream<A>>  head();
 
     /**
      * @return the tail of the stream.
@@ -73,7 +73,7 @@ public abstract class Stream<A> {
     public List<A> toList() {
         class ListHelper {
             TailCall<List<A>> go(List<A> acc, Stream<A> ss) {
-                return ss.isEmpty() ? ret(acc) : sus(() -> go(acc.cons(ss.head()), ss.tail()));
+                return ss.isEmpty() ? ret(acc) : sus(() -> go(acc.cons(ss.head()._1), ss.tail()));
             }
         }
 
@@ -108,7 +108,7 @@ public abstract class Stream<A> {
     public Stream<A> dropWhile(Function<A, Boolean> p) {
         class DropHelper{
             TailCall<Stream<A>> go(Stream<A> ss) {
-                return ss.isEmpty() ||  p.apply(ss.head()) ?  sus(() -> go(ss.tail())) : ret(ss);
+                return ss.isEmpty() ||  p.apply(ss.head()._1) ?  sus(() -> go(ss.tail())) : ret(ss);
             }
         }
 
@@ -143,7 +143,7 @@ public abstract class Stream<A> {
     public boolean exists(Function<A, Boolean> p) {
         class ExistsHelper {
             TailCall<Boolean> go(Stream<A> ss) {
-                return ss.isEmpty() || p.apply(ss.head()) ? ret(true) : sus(() -> go(ss.tail()));
+                return ss.isEmpty() || p.apply(ss.head()._1) ? ret(true) : sus(() -> go(ss.tail()));
             }
         }
 
@@ -190,7 +190,7 @@ public abstract class Stream<A> {
     public Stream<A> filter(Function<A, Boolean> p) {
         var stream = dropWhile(x -> !p.apply(x));
 
-        return stream.isEmpty() ? empty() : cons(stream::head, () -> stream.tail().filter(p));
+        return stream.isEmpty() ? stream : cons(() -> stream.head()._1, () -> stream.tail().filter(p));
     }
 
     /**
@@ -289,7 +289,7 @@ public abstract class Stream<A> {
         }
 
         @Override
-        public A head() {
+        public Tuple<A, Stream<A>> head() {
             throw new IllegalStateException("head called on empty stream");
         }
 
@@ -311,29 +311,27 @@ public abstract class Stream<A> {
 
     private static class Cons<A> extends Stream<A> {
         private final Supplier<A> head;
-        private A h;
+        private Result<A> h;
         private final Supplier<Stream<A>> tail;
         private Stream<A> t;
 
         private Cons(Supplier<A> h, Supplier<Stream<A>> t) {
             head = h;
             tail = t;
-            this.h = null;
+            this.h = Result.empty();
         }
 
         private Cons(A h, Supplier<Stream<A>> t) {
             head = () -> h;
             tail = t;
-            this.h = h;
+            this.h = Result.success(h);
         }
 
         @Override
-        public A head() {
-            if (h == null) {
-                h = head.get();
-            }
+        public Tuple<A, Stream<A>> head() {
+            A a = h.getOrElse(head.get());
 
-            return h;
+            return h.isEmpty() ? Tuple.create(a, new Cons<>(a, tail)) : Tuple.create(a, this);
         }
 
         @Override
@@ -358,7 +356,7 @@ public abstract class Stream<A> {
         public <B> B foldRight(Supplier<B> identity, Function<A, Function<Supplier<B>, B>> f) {
             //Its really a challenge to implement a stack safe version of foldRight,
             //or its next to impossible.
-            return f.apply(head()).apply(() -> tail().foldRight(identity, f));
+            return f.apply(head()._1).apply(() -> tail().foldRight(identity, f));
         }
     }
 
