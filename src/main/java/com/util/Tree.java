@@ -1,6 +1,8 @@
 package com.util;
 
 
+import static com.util.List.list;
+
 public abstract class Tree<A extends Comparable<A>> {
     @SuppressWarnings("rawtypes")
     private static Tree EMPTY = new Empty();
@@ -13,6 +15,14 @@ public abstract class Tree<A extends Comparable<A>> {
     public abstract Tree<A> insert(A value);
 
     public abstract boolean member(A value);
+
+    public abstract int size();
+
+    public abstract int height();
+
+    public abstract Result<A> max();
+
+    public abstract Result<A> min();
 
     @Override
     public abstract String toString();
@@ -39,6 +49,7 @@ public abstract class Tree<A extends Comparable<A>> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Tree<A> insert(A value) {
             return new T<>(EMPTY, value, EMPTY);
         }
@@ -46,6 +57,26 @@ public abstract class Tree<A extends Comparable<A>> {
         @Override
         public boolean member(A value) {
             return false;
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public int height() {
+            return -1;
+        }
+
+        @Override
+        public Result<A> max() {
+            return Result.empty();
+        }
+
+        @Override
+        public Result<A> min() {
+            return Result.empty();
         }
     }
 
@@ -82,15 +113,35 @@ public abstract class Tree<A extends Comparable<A>> {
 
         @Override
         public Tree<A> insert(A value) {
-            return this.value.compareTo(value) < 0 ? new T<>(left.insert(value), this.value, right) :
-                    this.value.compareTo(value) > 0 ? new T<>(left, this.value, right.insert(value)) :
+            return this.value.compareTo(value) > 0 ? new T<>(left.insert(value), this.value, right) :
+                    this.value.compareTo(value) < 0 ? new T<>(left, this.value, right.insert(value)) :
                             new T<>(left, value, right);
         }
 
         @Override
         public boolean member(A value) {
-            return this.value.compareTo(value) < 0 ? left.member(value) :
-                    this.value.compareTo(value) == 0 || right.member(value);
+            return value.compareTo(this.value) < 0 ? left.member(value) :
+                    value.compareTo(this.value) == 0 || right.member(value);
+        }
+
+        @Override
+        public int size() {
+            return left.size() + right.size() + 1;
+        }
+
+        @Override
+        public int height() {
+            return Math.max(left.height(), right.height()) + 1;
+        }
+
+        @Override
+        public Result<A> max() {
+            return right.max().orElse(() -> Result.success(value));
+        }
+
+        @Override
+        public Result<A> min() {
+            return left.min().orElse(() -> Result.success(value));
         }
     }
 
@@ -101,16 +152,10 @@ public abstract class Tree<A extends Comparable<A>> {
 
     @SafeVarargs
     public static <A extends Comparable<A>> Tree<A> tree(A... as) {
-        Tree<A> res = empty();
-
-        for (A a : as) {
-            res = res.insert(a);
-        }
-
-        return res;
+        return tree(list(as));
     }
 
     public static <A extends Comparable<A>> Tree<A> tree(List<A> as) {
-        return as.foldLeft(Tree.<A>empty(), acc -> a -> acc.insert(a));
+        return as.foldLeft(Tree.empty(), acc -> acc::insert);
     }
 }
