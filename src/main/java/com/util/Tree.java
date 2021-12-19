@@ -10,6 +10,13 @@ public abstract class Tree<A extends Comparable<A>> {
     abstract Tree<A> left();
     abstract Tree<A> right();
 
+    public abstract Tree<A> insert(A value);
+
+    public abstract boolean member(A value);
+
+    @Override
+    public abstract String toString();
+
     private static class Empty<A extends Comparable<A>> extends Tree<A> {
         @Override
         public A value() {
@@ -29,6 +36,16 @@ public abstract class Tree<A extends Comparable<A>> {
         @Override
         public String toString() {
             return "E";
+        }
+
+        @Override
+        public Tree<A> insert(A value) {
+            return new T<>(EMPTY, value, EMPTY);
+        }
+
+        @Override
+        public boolean member(A value) {
+            return false;
         }
     }
 
@@ -62,10 +79,38 @@ public abstract class Tree<A extends Comparable<A>> {
         public String toString() {
             return String.format("(T %s %s %s)", left, value, right);
         }
+
+        @Override
+        public Tree<A> insert(A value) {
+            return this.value.compareTo(value) < 0 ? new T<>(left.insert(value), this.value, right) :
+                    this.value.compareTo(value) > 0 ? new T<>(left, this.value, right.insert(value)) :
+                            new T<>(left, value, right);
+        }
+
+        @Override
+        public boolean member(A value) {
+            return this.value.compareTo(value) < 0 ? left.member(value) :
+                    this.value.compareTo(value) == 0 || right.member(value);
+        }
     }
 
     @SuppressWarnings("unchecked")
     public static <A extends Comparable<A>> Tree<A> empty() {
         return EMPTY;
+    }
+
+    @SafeVarargs
+    public static <A extends Comparable<A>> Tree<A> tree(A... as) {
+        Tree<A> res = empty();
+
+        for (A a : as) {
+            res = res.insert(a);
+        }
+
+        return res;
+    }
+
+    public static <A extends Comparable<A>> Tree<A> tree(List<A> as) {
+        return as.foldLeft(Tree.<A>empty(), acc -> a -> acc.insert(a));
     }
 }
