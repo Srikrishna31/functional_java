@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 public class TreeTest {
     private Tree<Integer> tree = Tree.tree(2,1,3);
@@ -21,6 +22,7 @@ public class TreeTest {
         var tree = Tree.tree(2,3,1);
 
         assertTrue(tree.member(1));
+        assertFalse(tree.member(6));
     }
 
     @Test
@@ -43,5 +45,24 @@ public class TreeTest {
     @Test
     public void testHeight() {
         assertEquals(1, tree.height());
+    }
+
+    @Test
+    public void testRemove() {
+        var res = tree.remove(2);
+
+        System.out.println(res);
+
+        assertEquals("(T E 1 (T E 3 E))", res.toString());
+    }
+
+    @Test
+    public void testMerge() {
+        var tree2 = Tree.tree(5, 4, 6);
+        var res = tree.merge(tree2);
+
+        System.out.println(res);
+
+        assertEquals("(T (T E 1 E) 2 (T E 3 (T (T E 4 E) 5 (T E 6 E))))", res.toString());
     }
 }

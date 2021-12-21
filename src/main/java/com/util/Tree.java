@@ -24,6 +24,14 @@ public abstract class Tree<A extends Comparable<A>> {
 
     public abstract Result<A> min();
 
+    public abstract Tree<A> remove(A a);
+
+    public abstract boolean isEmpty();
+
+    protected abstract Tree<A> removeMerge(Tree<A> that);
+
+    public abstract Tree<A> merge(Tree<A> that);
+
     @Override
     public abstract String toString();
 
@@ -77,6 +85,26 @@ public abstract class Tree<A extends Comparable<A>> {
         @Override
         public Result<A> min() {
             return Result.empty();
+        }
+
+        @Override
+        public Tree<A> remove(A a) {
+            throw new IllegalStateException("remove() called on empty tree");
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return true;
+        }
+
+        @Override
+        protected Tree<A> removeMerge(Tree<A> that) {
+            return that;
+        }
+
+        @Override
+        public Tree<A> merge(Tree<A> that) {
+            return that;
         }
     }
 
@@ -142,6 +170,53 @@ public abstract class Tree<A extends Comparable<A>> {
         @Override
         public Result<A> min() {
             return left.min().orElse(() -> Result.success(value));
+        }
+
+        @Override
+        public Tree<A> remove(A a) {
+            if (a.compareTo(value) < 0) {
+                return new T<>(left.remove(a), value, right);
+            } else if (a.compareTo(value) > 0) {
+                return new T<>(left, value, right.remove(a));
+            } else {
+                return left.removeMerge(right);
+            }
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        protected Tree<A> removeMerge(Tree<A> that) {
+            if (that.isEmpty()) {
+                return this;
+            }
+            if (that.value().compareTo(value) < 0) {
+                return new T<>(left.removeMerge(that), value, right);
+            }
+
+            if(that.value().compareTo(value) > 0) {
+                return new T<>(left, value, right.removeMerge(that));
+            }
+
+            throw new IllegalStateException("We shouldn't be here");
+        }
+
+        @Override
+        public Tree<A> merge(Tree<A> that) {
+            if (that.isEmpty()) {
+                return this;
+            } else if (that.value().compareTo(value()) > 0) {
+                return new T<>(left, value,
+                        right.merge(new T<>(empty(), that.value(), that.right())).merge(that.left()));
+            } else if (that.value().compareTo(value()) < 0) {
+                return new T<>(left.merge(new T<>(that.left(), that.value(), empty())), value,
+                        right).merge(that.right());
+            } else {
+                return new T<>(that.left().merge(left()), value, that.right().merge(right()));
+            }
         }
     }
 
