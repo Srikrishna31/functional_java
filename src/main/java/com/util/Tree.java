@@ -1,6 +1,6 @@
 package com.util;
 
-
+import com.functional.Function;
 import static com.util.List.list;
 
 public abstract class Tree<A extends Comparable<A>> {
@@ -31,6 +31,16 @@ public abstract class Tree<A extends Comparable<A>> {
     protected abstract Tree<A> removeMerge(Tree<A> that);
 
     public abstract Tree<A> merge(Tree<A> that);
+
+    public abstract <B> B foldLeft(B identity, Function<B, Function<A, B>> f, Function<B, Function<B, B>> g);
+
+    public abstract <B> B foldRight(B identity, Function<A, Function<B, B>> f, Function<B, Function<B, B>> g);
+
+    public abstract <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f);
+
+    public abstract <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f);
+
+    public abstract <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f);
 
     @Override
     public abstract String toString();
@@ -105,6 +115,31 @@ public abstract class Tree<A extends Comparable<A>> {
         @Override
         public Tree<A> merge(Tree<A> that) {
             return that;
+        }
+
+        @Override
+        public <B> B foldLeft(B identity, Function<B, Function<A, B>> f, Function<B, Function<B, B>> g) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldRight(B identity, Function<A, Function<B, B>> f, Function<B, Function<B, B>> g) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f) {
+            return identity;
         }
     }
 
@@ -218,6 +253,57 @@ public abstract class Tree<A extends Comparable<A>> {
                 return new T<>(that.left().merge(left()), value, that.right().merge(right()));
             }
         }
+
+        @Override
+        public <B> B foldLeft(B identity, Function<B, Function<A, B>> f, Function<B, Function<B, B>> g) {
+            /** There can be 6 possible implementations:
+             * Post order left
+             * Pre order left
+             * In order left
+             * Post order right
+             * Pre order right
+             * In order right
+             */
+            var leftFold = left.foldLeft(identity, f, g);
+            var rightFold = right.foldLeft(identity, f, g);
+
+            return g.apply(f.apply(leftFold).apply(value)).apply(rightFold);
+        }
+
+        @Override
+        public <B> B foldRight(B identity, Function<A, Function<B, B>> f, Function<B, Function<B, B>> g) {
+            /** There can be 6 possible implementations:
+             * Post order left
+             * Pre order left
+             * In order left
+             * Post order right
+             * Pre order right
+             * In order right
+             */
+            var leftFold = left.foldRight(identity, f, g);
+            var rightFold = right.foldRight(identity, f, g);
+
+            return g.apply(f.apply(value).apply(leftFold)).apply(rightFold);
+        }
+
+        @Override
+        public <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f) {
+            //Other possiblity is to use right fold first.
+            return f.apply(left.foldInOrder(identity, f)).apply(value).apply(right.foldInOrder(identity, f));
+        }
+
+        @Override
+        public <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f) {
+            //Other possiblity is to use right fold first.
+            return f.apply(value).apply(left.foldPreOrder(identity, f)).apply(right.foldPreOrder(identity, f));
+        }
+
+        @Override
+        public <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f) {
+            //Other possiblity is to use right fold first.
+            return f.apply(left.foldPostOrder(identity, f)).apply(right.foldPostOrder(identity, f)).apply(value);
+        }
+
     }
 
     @SuppressWarnings("unchecked")
