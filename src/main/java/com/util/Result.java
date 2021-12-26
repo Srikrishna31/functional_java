@@ -162,6 +162,14 @@ public abstract class Result<T> implements Serializable {
 
 
     /**
+     * This overload maps the empty result to a failure object. This function is a noop
+     * for Success and Failure objects.
+     * @return the transformed failure object if the original object was an empty
+     * object, otherwise this.
+     */
+    public abstract Result<T> mapEmpty();
+
+    /**
      * This function returns the other object if this object is not a success
      * object. Otherwise it returns this object.
      * @param defaultValue : The supplier function, which will be evaluated in
@@ -335,6 +343,9 @@ public abstract class Result<T> implements Serializable {
         }
 
         @Override
+        public Result<T> mapEmpty() { return this; }
+
+        @Override
         public Result<T> mapFailure(String s, Exception e) {
             return this;
         }
@@ -397,6 +408,12 @@ public abstract class Result<T> implements Serializable {
         public Result<T> mapFailure(String s, Exception e) {
             return failure(new IllegalStateException(s, e));
         }
+
+        @Override
+        public Result<T> mapEmpty(String s) { return this; }
+
+        @Override
+        public Result<T> mapEmpty() { return this; }
 
         @Override
         public void forEachOrThrow(Effect<T> ef) {
@@ -462,6 +479,9 @@ public abstract class Result<T> implements Serializable {
         public Result<T> mapEmpty(String s) {
             return failure(new IllegalStateException(s));
         }
+
+        @Override
+        public Result<T> mapEmpty() { return mapEmpty("Empty object"); }
 
         @Override
         public void forEachOrThrow(Effect<T> ef) { }

@@ -42,6 +42,20 @@ public abstract class Tree<A extends Comparable<A>> {
 
     public abstract <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f);
 
+    public static <A extends Comparable<A>> boolean lt(A first, A second) {
+        return first.compareTo(second) < 0;
+    }
+
+    public static <A extends Comparable<A>> boolean lt(A first, A second, A third) {
+        return lt(first, second) && lt(second, third);
+    }
+
+    public static <A extends Comparable<A>> boolean ordered(Tree<A> left, A value, Tree<A> right) {
+        return left.max().flatMap(lMax -> right.min().map(rMin -> lt(lMax, value, rMin))).getOrElse(left.isEmpty() && right.isEmpty())
+                || left.min().mapEmpty().flatMap(ignore -> right.min().map(rMin -> lt(value, rMin))).getOrElse(false)
+                || right.min().mapEmpty().flatMap(ignore -> left.max().map(lMax -> lt(lMax, value))).getOrElse(false);
+    }
+
     @Override
     public abstract String toString();
 
@@ -175,10 +189,12 @@ public abstract class Tree<A extends Comparable<A>> {
         }
 
         @Override
-        public Tree<A> insert(A value) {
-            return this.value.compareTo(value) > 0 ? new T<>(left.insert(value), this.value, right) :
-                    this.value.compareTo(value) < 0 ? new T<>(left, this.value, right.insert(value)) :
-                            new T<>(left, value, right);
+        public Tree<A> insert(A insertedValue) {
+            return insertedValue.compareTo(value) < 0
+                    ? new T<>(left.insert(insertedValue), value, right)
+                    : insertedValue.compareTo(value) > 0
+                        ? new T<>(left, value, right.insert(insertedValue))
+                        : new T<>(left, insertedValue, right);
         }
 
         @Override
@@ -243,15 +259,16 @@ public abstract class Tree<A extends Comparable<A>> {
         public Tree<A> merge(Tree<A> that) {
             if (that.isEmpty()) {
                 return this;
-            } else if (that.value().compareTo(value()) > 0) {
+            }
+            if (that.value().compareTo(value) > 0) {
                 return new T<>(left, value,
-                        right.merge(new T<>(empty(), that.value(), that.right())).merge(that.left()));
-            } else if (that.value().compareTo(value()) < 0) {
+                        right.merge(new T<>(empty(), that.value(), that.right()))).merge(that.left());
+            }
+            if (that.value().compareTo(value) < 0) {
                 return new T<>(left.merge(new T<>(that.left(), that.value(), empty())), value,
                         right).merge(that.right());
-            } else {
-                return new T<>(that.left().merge(left()), value, that.right().merge(right()));
             }
+            return new T<>(left.merge(that.left()), value, right.merge(that.right()));
         }
 
         @Override
@@ -317,6 +334,14 @@ public abstract class Tree<A extends Comparable<A>> {
     }
 
     public static <A extends Comparable<A>> Tree<A> tree(List<A> as) {
-        return as.foldLeft(Tree.empty(), acc -> acc::insert);
+        return as.foldLeft(empty(), acc -> acc::insert);
+    }
+
+    public static <A extends Comparable<A>> Tree<A> tree(Tree<A> t1, A a, Tree<A> t2) {
+        return ordered(t1, a, t2)
+                ? new T<>(t1, a, t2)
+                : ordered(t2, a, t1)
+                    ? new T<>(t2, a, t1)
+                    : Tree.<A>empty().insert(a).merge(t1).merge(t2);
     }
 }

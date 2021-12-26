@@ -75,7 +75,7 @@ public abstract class List<A> {
     @Override
     public String toString() {
         return String.format("[%sNIL]",
-                foldLeft(new StringBuilder(), acc -> v -> acc.append(", ").append(v)));
+                foldLeft(new StringBuilder(), acc -> v -> acc.append(v).append(", ")));
     }
 
     /**
@@ -123,6 +123,16 @@ public abstract class List<A> {
      */
     public static <A> List<A> concat(List<A> list1, List<A> list2) {
         return list1.foldRight(list2, v -> acc -> acc.cons(v));
+    }
+
+    /**
+     * Same as the static concat method, but a convenience member method to
+     * concat another list to this list.
+     * @param that : The other list to concat to this list.
+     * @return the combined list of this and that.
+     */
+    public List<A> concat(List<A> that) {
+        return concat(this, that);
     }
 
     /**
