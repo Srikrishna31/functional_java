@@ -36,11 +36,17 @@ public abstract class Tree<A extends Comparable<A>> {
 
     public abstract <B> B foldRight(B identity, Function<A, Function<B, B>> f, Function<B, Function<B, B>> g);
 
-    public abstract <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f);
+    public abstract <B> B foldInOrderLeft(B identity, Function<B, Function<A, Function<B, B>>> f);
 
-    public abstract <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f);
+    public abstract <B> B foldPreOrderLeft(B identity, Function<A, Function<B, Function<B, B>>> f);
 
-    public abstract <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f);
+    public abstract <B> B foldPostOrderLeft(B identity, Function<B, Function<B, Function<A, B>>> f);
+
+    public abstract <B> B foldInOrderRight(B identity, Function<B, Function<A, Function<B, B>>> f);
+
+    public abstract <B> B foldPreOrderRight(B identity, Function<A, Function<B, Function<B, B>>> f);
+
+    public abstract <B> B foldPostOrderRight(B identity, Function<B, Function<B, Function<A, B>>> f);
 
     public static <A extends Comparable<A>> boolean lt(A first, A second) {
         return first.compareTo(second) < 0;
@@ -55,6 +61,13 @@ public abstract class Tree<A extends Comparable<A>> {
                 || left.min().mapEmpty().flatMap(ignore -> right.min().map(rMin -> lt(value, rMin))).getOrElse(false)
                 || right.min().mapEmpty().flatMap(ignore -> left.max().map(lMax -> lt(lMax, value))).getOrElse(false);
     }
+
+    public <B extends Comparable<B>> Tree<B> map(Function<A, B> f) {
+        return foldInOrderLeft(empty(), t1 -> a -> t2 -> tree(t1, f.apply(a), t2));
+    }
+
+    protected abstract Tree<A> rotateLeft();
+    protected abstract Tree<A> rotateRight();
 
     @Override
     public abstract String toString();
@@ -142,19 +155,40 @@ public abstract class Tree<A extends Comparable<A>> {
         }
 
         @Override
-        public <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f) {
+        public <B> B foldInOrderLeft(B identity, Function<B, Function<A, Function<B, B>>> f) {
             return identity;
         }
 
         @Override
-        public <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f) {
+        public <B> B foldPreOrderLeft(B identity, Function<A, Function<B, Function<B, B>>> f) {
             return identity;
         }
 
         @Override
-        public <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f) {
+        public <B> B foldPostOrderLeft(B identity, Function<B, Function<B, Function<A, B>>> f) {
             return identity;
         }
+
+        @Override
+        public <B> B foldInOrderRight(B identity, Function<B, Function<A, Function<B, B>>> f) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldPreOrderRight(B identity, Function<A, Function<B, Function<B, B>>> f) {
+            return identity;
+        }
+
+        @Override
+        public <B> B foldPostOrderRight(B identity, Function<B, Function<B, Function<A, B>>> f) {
+            return identity;
+        }
+
+        @Override
+        protected Tree<A> rotateLeft() { return this; }
+
+        @Override
+        protected Tree<A> rotateRight() { return this; }
     }
 
     private static class T<A extends Comparable<A>> extends Tree<A> {
@@ -190,9 +224,9 @@ public abstract class Tree<A extends Comparable<A>> {
 
         @Override
         public Tree<A> insert(A insertedValue) {
-            return insertedValue.compareTo(value) < 0
+            return lt(insertedValue, value)
                     ? new T<>(left.insert(insertedValue), value, right)
-                    : insertedValue.compareTo(value) > 0
+                    : lt(value, insertedValue)
                         ? new T<>(left, value, right.insert(insertedValue))
                         : new T<>(left, insertedValue, right);
         }
@@ -225,9 +259,9 @@ public abstract class Tree<A extends Comparable<A>> {
 
         @Override
         public Tree<A> remove(A a) {
-            if (a.compareTo(value) < 0) {
+            if (lt(a, value)) {
                 return new T<>(left.remove(a), value, right);
-            } else if (a.compareTo(value) > 0) {
+            } else if (lt(value, a)) {
                 return new T<>(left, value, right.remove(a));
             } else {
                 return left.removeMerge(right);
@@ -304,23 +338,53 @@ public abstract class Tree<A extends Comparable<A>> {
         }
 
         @Override
-        public <B> B foldInOrder(B identity, Function<B, Function<A, Function<B, B>>> f) {
-            //Other possiblity is to use right fold first.
-            return f.apply(left.foldInOrder(identity, f)).apply(value).apply(right.foldInOrder(identity, f));
+        public <B> B foldInOrderLeft(B identity, Function<B, Function<A, Function<B, B>>> f) {
+            return f.apply(left.foldInOrderLeft(identity, f)).apply(value).apply(right.foldInOrderLeft(identity, f));
         }
 
         @Override
-        public <B> B foldPreOrder(B identity, Function<A, Function<B, Function<B, B>>> f) {
-            //Other possiblity is to use right fold first.
-            return f.apply(value).apply(left.foldPreOrder(identity, f)).apply(right.foldPreOrder(identity, f));
+        public <B> B foldInOrderRight(B identity, Function<B, Function<A, Function<B, B>>> f) {
+            return f.apply(right.foldInOrderRight(identity, f)).apply(value).apply(left.foldInOrderRight(identity, f));
         }
 
         @Override
-        public <B> B foldPostOrder(B identity, Function<B, Function<B, Function<A, B>>> f) {
-            //Other possiblity is to use right fold first.
-            return f.apply(left.foldPostOrder(identity, f)).apply(right.foldPostOrder(identity, f)).apply(value);
+        public <B> B foldPreOrderLeft(B identity, Function<A, Function<B, Function<B, B>>> f) {
+            return f.apply(value).apply(left.foldPreOrderLeft(identity, f)).apply(right.foldPreOrderLeft(identity, f));
         }
 
+        @Override
+        public <B> B foldPreOrderRight(B identity, Function<A, Function<B, Function<B, B>>> f) {
+            return f.apply(value).apply(right.foldPreOrderRight(identity, f)).apply(left.foldPreOrderRight(identity,
+                    f));
+        }
+
+        @Override
+        public <B> B foldPostOrderLeft(B identity, Function<B, Function<B, Function<A, B>>> f) {
+            return f.apply(left.foldPostOrderLeft(identity, f)).apply(right.foldPostOrderLeft(identity, f)).apply(value);
+        }
+
+        @Override
+        public <B> B foldPostOrderRight(B identity, Function<B, Function<B, Function<A, B>>> f) {
+            return f.apply(right.foldPostOrderRight(identity, f)).apply(left.foldPostOrderRight(identity, f)).apply(value);
+        }
+
+        @Override
+        protected Tree<A> rotateLeft() {
+            if (right.isEmpty())  {
+                return this;
+            }
+
+            return new T<>(new T<>(left, value, right.left()), right.value(), right.right());
+        }
+
+        @Override
+        protected Tree<A> rotateRight() {
+            if (left.isEmpty()) {
+                return this;
+            }
+
+            return new T<>(left.left(), left.value(), new T<>(left.right(), value, right));
+        }
     }
 
     @SuppressWarnings("unchecked")
