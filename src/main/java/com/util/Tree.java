@@ -1,6 +1,12 @@
 package com.util;
 
 import com.functional.Function;
+import com.functional.TailCall;
+import com.functional.Tuple;
+
+import static com.functional.TailCall.ret;
+import static com.functional.TailCall.sus;
+
 import static com.util.List.list;
 
 public abstract class Tree<A extends Comparable<A>> {
@@ -69,8 +75,114 @@ public abstract class Tree<A extends Comparable<A>> {
     protected abstract Tree<A> rotateLeft();
     protected abstract Tree<A> rotateRight();
 
+    public List<A> toListInOrderRight() {
+        class ListInOrderRightHelper {
+            TailCall<List<A>> go(List<A> acc, Tree<A> tree) {
+                return (tree.isEmpty()) ? ret(acc) : tree.left().isEmpty() ? sus(() -> go(acc.cons(tree.value()),
+                        //Rotate the tree right until the left branch is empty.
+                        tree.right())) : sus(() -> go(acc, tree.rotateRight()));
+            }
+        }
+
+        return new ListInOrderRightHelper().go(list(), this).eval();
+    }
+
+    public List<A> toListInOrderLeft() {
+        class ListInOrderLeftHelper {
+            TailCall<List<A>> go(List<A> acc, Tree<A> tree) {
+                return (tree.isEmpty()) ? ret(acc) : tree.right().isEmpty() ? sus(() -> go(acc.cons(tree.value()),
+                        //Rotate the tree left until the right right branch is empty
+                        tree.left())) : sus(() -> go(acc, tree.rotateLeft()));
+            }
+        }
+
+        return new ListInOrderLeftHelper().go(list(), this).eval();
+    }
+
+    private static int log2nlz(int n) {
+        return n == 0 ? 0 : 31 - Integer.numberOfLeadingZeros(n);
+    }
+
     @Override
     public abstract String toString();
+
+    /**
+     * A tree is balanced if the difference between the heights of both branches
+     * is 0 if the total size of branches is even, and 1 if the size is odd.
+     * @param tree : The tree to be checked for balance property.
+     * @param <A> : Type parameter of elements of the tree.
+     * @return true if tree is not balanced, false otherwise.
+     */
+    public static <A extends Comparable<A>> boolean isUnBalanced(Tree<A> tree) {
+        return Math.abs(tree.left().height() - tree.right().height()) > (tree.size() - 1) % 2;
+    }
+
+    public static <A> A unfold(A a, Function<A, Result<A>> f) {
+        class UnfoldHelper {
+            TailCall<Result<A>> go(Result<A> a) {
+                var res = a.flatMap(f);
+                return res.isSuccess() ? sus(() -> go(res)) : ret(a);
+            }
+        }
+
+        return new UnfoldHelper().go(Result.success(a)).eval().getOrElse(a);
+    }
+
+    /**
+     * This function balances the given tree according to the following
+     * Day-Stout-Warren algorithm:
+     * This algorithm is simple. First, transform the tree into a totally
+     * unbalanced tree. Then apply rotations until the tree is fully balanced.
+     * 1. Rotate the tree left until the result has branches as equal as possible.
+     * This means that the branch sizes will be equal if the total size is odd,
+     * and will differ by 1 if the total size is even. The result will be a tree
+     * with two totally unbalanced branches of near to equal size.
+     * 2. Apply the same process recursively to the right branch. Apply the
+     * symmetric process(rotating right) to the left branch.
+     * 3. Stop when the height of the result is equal to log2(size).
+     * @param tree : The tree to be balanced.
+     * @param <A> : Type parameter of the elements to be held in the tree.
+     * @return the balanced tree.
+     */
+    public static <A extends Comparable<A>> Tree<A> balance(Tree<A> tree) {
+        class BalanceHelper<A extends Comparable<A>> {
+            Tree<A> go(Tree<A> tree) {
+                return !tree.isEmpty() && tree.height() > log2nlz(tree.size())
+                        ? Math.abs(tree.left().height() - tree.right().height()) > 1
+                        //As long as the tree is not balanced, keep balancing the
+                        //first level, which could mean rotating left.
+                            ? go(balanceFirstLevel(tree))
+                        //When the balance is almost equal, then apply the recursive
+                        //process for the left and right branches.
+                            : new T<>(go(tree.left()), tree.value(), go(tree.right()))
+                        : tree; //if the tree is already balanced, return it.
+            }
+        }
+
+        //The initial step is to create a totally unbalanced tree (effectively a linked list,
+        //in ascending order, and then call the helper method.
+        return new BalanceHelper<A>().go(tree.toListInOrderRight().foldLeft(Tree.<A>empty(),
+                t -> a -> new T<>(empty(), a, t)));
+    }
+
+    /**
+     * This is a helper method for balancing trees. Given a tree, it checks if the tree
+     * is unbalanced, and if so, it checks whether the right branch is deeper or the left
+     * branch. If the right branch is deeper, then the right branch is rotated left.
+     * Otherwise, (if the left branch is deeper), then the left branch is rotated right.
+     * @param tree : The tree for which the first level is to be balanced.
+     * @param <A> : Type parameter of the elements of the tree.
+     * @return the tree whose first levels are rotated right or left, reducing the measure
+     * of imbalance.
+     */
+    private static <A extends Comparable<A>> Tree<A> balanceFirstLevel(Tree<A> tree) {
+        return unfold(tree,
+                t -> isUnBalanced(t)
+                        ? tree.right().height() > tree.left().height()
+                            ? Result.success(t.rotateLeft())
+                            : Result.success(t.rotateRight())
+                        : Result.empty());
+    }
 
     private static class Empty<A extends Comparable<A>> extends Tree<A> {
         @Override

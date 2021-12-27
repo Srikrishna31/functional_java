@@ -1,5 +1,6 @@
 package com.util;
 
+import com.lazy.Stream;
 import org.junit.Test;
 
 import com.functional.Function;
@@ -277,5 +278,56 @@ public class TreeTest {
         System.out.println(res);
 
         assertEquals("(T (T E 1.0 E) 2.0 (T E 3.0 E))", res.toString());
+    }
+
+    @Test
+    public void testToListInOrderRight() {
+        List<Integer> list = List.list(4, 6, 7, 5, 2, 1, 3);
+        var tree = Tree.tree(list);
+        var res = tree.toListInOrderRight();
+
+        assertEquals("[7, 6, 5, 4, 3, 2, 1, NIL]", res.toString());
+    }
+
+    @Test
+    public void testToListInOrderLeft() {
+        List<Integer> list = List.list(4, 6, 7, 5, 2, 1, 3);
+        var tree = Tree.tree(list);
+        var res = tree.toListInOrderLeft();
+
+        assertEquals("[1, 2, 3, 4, 5, 6, 7, NIL]", res.toString());
+    }
+
+    @Test
+    public void testIsUnBalanced() {
+        assertFalse(Tree.isUnBalanced(tree));
+
+        var nTree = Tree.tree(1,2,3,4,5);
+
+        assertTrue(Tree.isUnBalanced(nTree));
+    }
+
+    @Test(expected = StackOverflowError.class)
+    public void testBalanceRandom() {
+        int testLimitRandom = 150_000;
+        //List<Integer> randomTestList =
+        //        SimpleRNG.doubles(testLimitRandom, new SimpleRNG.Simple(3))._1.map(x -> (int) (x * testLimitRandom
+        //        * 3));
+        List<Integer> randomTestList =
+                Stream.from(0).take(testLimitRandom).map( i -> (int)(testLimitRandom * Math.random())).toList();
+        Tree<Integer> randomTree = randomTestList.foldLeft(Tree.empty(), m -> m::insert);
+        Tree<Integer> result = Tree.balance(randomTree);
+        assertEquals(randomTree.size(), result.size());
+        assertFalse(Tree.isUnBalanced(result));
+    }
+
+    @Test(expected = StackOverflowError.class)
+    public void testBalanceOrdered() {
+        int testLimitOrdered = 15_000; // Too high value will overflow the stack on Tree.insert
+        List<Integer> orderedTestList = List.range(0, testLimitOrdered);
+        Tree<Integer> orderedTree = orderedTestList.foldLeft(Tree.empty(), m -> m::insert);
+        Tree<Integer> result = Tree.balance(orderedTree);
+        assertEquals(orderedTree.size(), result.size());
+        assertFalse(Tree.isUnBalanced(result));
     }
 }
