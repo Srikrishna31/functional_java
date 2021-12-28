@@ -140,6 +140,9 @@ public abstract class Tree<A extends Comparable<A>> {
      * 2. Apply the same process recursively to the right branch. Apply the
      * symmetric process(rotating right) to the left branch.
      * 3. Stop when the height of the result is equal to log2(size).
+     * Unfortunately, this method would blow the stack for trees which are heavily
+     * unbalanced, since in the process of balancing them, the recursive call
+     * could go out of the limit.
      * @param tree : The tree to be balanced.
      * @param <A> : Type parameter of the elements to be held in the tree.
      * @return the balanced tree.
@@ -336,6 +339,19 @@ public abstract class Tree<A extends Comparable<A>> {
 
         @Override
         public Tree<A> insert(A insertedValue) {
+            var res = ins(insertedValue);
+
+            //TODO: This causes the balanceTree for large heighted trees to
+            // Run forever. Need to fix it before enabling balancing.
+//            if (res.height() > log2nlz(res.size()) * 20) {
+//                return balance(res);
+//            }
+
+            return res;
+
+        }
+
+        protected Tree<A> ins(A insertedValue) {
             return lt(insertedValue, value)
                     ? new T<>(left.insert(insertedValue), value, right)
                     : lt(value, insertedValue)

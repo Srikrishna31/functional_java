@@ -310,6 +310,7 @@ public class TreeTest {
     @Test(expected = StackOverflowError.class)
     public void testBalanceRandom() {
         int testLimitRandom = 150_000;
+        //TODO: Use State RNG, and uncomment this line after State chapter is done.
         //List<Integer> randomTestList =
         //        SimpleRNG.doubles(testLimitRandom, new SimpleRNG.Simple(3))._1.map(x -> (int) (x * testLimitRandom
         //        * 3));
@@ -329,5 +330,20 @@ public class TreeTest {
         Tree<Integer> result = Tree.balance(orderedTree);
         assertEquals(orderedTree.size(), result.size());
         assertFalse(Tree.isUnBalanced(result));
+    }
+
+    @Test
+    public void testBalanceProper() {
+        Tree<Integer> t = Tree.tree(1,2,3,4,5,6,7);
+
+        System.out.println("********* Testing balance ****************");
+
+        System.out.println(t);
+
+        var res = Tree.balance(t);
+
+        System.out.println(res);
+
+        assertEquals("(T (T (T E 1 E) 2 (T E 3 E)) 4 (T (T E 5 E) 6 (T E 7 E)))", res.toString());
     }
 }
