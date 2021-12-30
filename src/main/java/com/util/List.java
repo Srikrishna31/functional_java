@@ -669,6 +669,29 @@ public abstract class List<A> {
     }
 
     /**
+     * A function which can generate a list for given number of elements, starting
+     * from the seed value.
+     * @param seed : The starting value to be included in the list.
+     * @param f : The generator function which takes the current seed, and returns the next one.
+     * @param n : The number of times to use the genrator function (also the number of elements
+     *          to be included in the list.
+     * @param <T> : Type parameter of the elements in the list.
+     * @return the list containing n elements, which are generated from the function f, starting
+     * from the seed value.
+     */
+    public static <T> List<T> iterate(T seed, Function<T, T> f, int n) {
+        var res = List.<T>list();
+        T temp = seed;
+
+        for (int i = 0; i < n; ++i) {
+            res = res.cons(temp);
+            temp = f.apply(temp);
+        }
+
+        return res.reverse();
+    }
+
+    /**
      * This function applies the given predicate to each element, until it returns
      * true. If none of the elements return true, then the result is false.
      * @param p : the predicate to be applied to each element of the list.

@@ -10,6 +10,7 @@ java_library(
         "main/java/com/functional/Effect.java",
         "main/java/com/functional/Executable.java",
         "main/java/com/functional/Function.java",
+        "main/java/com/functional/QuadFunction.java",
         "main/java/com/functional/TailCall.java",
         "main/java/com/functional/Tuple.java",
         "main/java/com/functional/Tuple3.java",

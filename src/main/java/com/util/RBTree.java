@@ -1,8 +1,11 @@
 package com.util;
 
+import static com.functional.Case.match;
+import static com.functional.Case.mcase;
 
-import java.awt.*;
+import static com.util.Result.success;
 
+import com.functional.QuadFunction;
 /**
  * A Red-Black tree is a binary search tree (BST) with some additions to its
  * structure and a modified insertion algorithm, which also balances the
@@ -45,6 +48,41 @@ public abstract class RBTree<A extends Comparable<A>> {
 
     @Override
     public abstract String toString();
+
+    private final QuadFunction<Color, RBTree<A>, A, RBTree<A>, Result<RBTree<A>>> balancer =
+            (Color color, RBTree<A> left, A value, RBTree<A> right) -> match(
+                    mcase(() -> success(new T<>(color, left, value, right))),
+                    mcase(() -> color.isB() && left.isTR() && left.left().isTR(),
+                            () -> success(new T<>(R, new T<>(B, left.left().left(), left.left().value(),
+                                    left.left().right()),
+                                    left.value(), new T<>(B, left.right(), value, right)))),
+                    mcase(() -> color.isB() && left.isTR() && left.right().isTR(),
+                            () ->success(new T<>(R, new T<>(B, left.left(), left.value(), left.right().left()),
+                                    left.right().value(),
+                                    new T<>(B, left.right().right(), value, right)))),
+                    mcase(() -> color.isB() && right.isTR() && right.left().isTR(),
+                            () -> success(new T<>(R, new T<>(B, left, value, right.left().left()), right.left().value(),
+                                    new T<>(B,
+                                    right.left().right(), right.value(), right.right())))),
+                    mcase(() -> color.isB() && right.isTR() && right.right().isTR(),
+                            () -> success(new T<>(R, new T<>(B, left, value, right.left()), right.value(), new T<>(B,
+                                    right.right().left(),
+                                    right.right().value(), right.right().right()))))
+            );
+
+    RBTree<A> balance(Color color, RBTree<A> left, A value, RBTree<A> right) {
+        return balancer.apply(color,left, value, right).getOrElse(this);
+    }
+
+    abstract RBTree<A> ins(A value);
+
+    public RBTree<A> insert(A value) {
+        return blacken(ins(value));
+    }
+
+    static <A extends Comparable<A>> RBTree<A> blacken(RBTree<A> t) {
+        return t.isEmpty() ? empty() : new T<>(B, t.left(), t.value(), t.right());
+    }
 
     /**
      * This class represents the empty node of a tree. It's just named E for
@@ -116,6 +154,11 @@ public abstract class RBTree<A extends Comparable<A>> {
         @Override
         public String toString() {
             return "E";
+        }
+
+        @Override
+        RBTree<A> ins(A value) {
+            return new T<>(R, empty(), value, empty());
         }
     }
 
@@ -199,6 +242,15 @@ public abstract class RBTree<A extends Comparable<A>> {
         @Override
         public String toString() {
             return String.format("(T %s %s %s %s)", color, left, value, right);
+        }
+
+        @Override
+        RBTree<A> ins(A value) {
+            return value.compareTo(this.value) < 0
+                    ? balance(color, left.ins(value), this.value, right)
+                    : value.compareTo(this.value) > 0
+                        ? balance(color, left, this.value, right.ins(value))
+                        : this;
         }
     }
 
