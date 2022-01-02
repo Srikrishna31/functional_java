@@ -3,10 +3,13 @@ package com.util;
 import static com.functional.Case.match;
 import static com.functional.Case.mcase;
 
+import static com.util.List.list;
 import static com.util.Result.success;
 
 import com.functional.Function;
 import com.functional.QuadFunction;
+import com.functional.TailCall;
+
 /**
  * A Red-Black tree is a binary search tree (BST) with some additions to its
  * structure and a modified insertion algorithm, which also balances the
@@ -43,6 +46,9 @@ public abstract class RBTree<A extends Comparable<A>> {
     protected abstract RBTree<A> right();
     protected abstract RBTree<A> left();
     protected abstract A value();
+
+    public abstract Result<A> max();
+    public abstract Result<A> min();
 
     public abstract int size();
     public abstract int height();
@@ -95,6 +101,7 @@ public abstract class RBTree<A extends Comparable<A>> {
                                     right.right().value(), right.right().right()))))
             );
 
+    @SuppressWarnings("unchecked")
     RBTree<A> balance(Color color, RBTree<A> left, A value, RBTree<A> right) {
         return balancer.apply(color,left, value, right).getOrElse(this);
     }
@@ -144,6 +151,30 @@ public abstract class RBTree<A extends Comparable<A>> {
         return t.isEmpty() ? empty() : new T<>(B, t.left(), t.value(), t.right());
     }
 
+    public List<A> toList() {
+        return foldLeft(list(), l -> l::cons, a-> b-> a.concat(b));
+    }
+
+    public <B extends Comparable<B>> RBTree<B> map(Function<A, B> f) {
+        return foldInOrderLeft(empty(), t1 -> a -> t2 -> tree(t1, f.apply(a), t2));
+    }
+
+    public static <A extends Comparable<A>> boolean lt(A first, A second) {
+        return first.compareTo(second) < 0;
+    }
+
+    public static <A extends Comparable<A>> boolean lt(A first, A second, A third) {
+        return lt(first, second) && lt(second, third);
+    }
+
+    public static <A extends Comparable<A>> boolean ordered(RBTree<A> left, A value, RBTree<A> right) {
+        return left.max().flatMap(lMax -> right.min().map(rMin -> lt(lMax, value, rMin))).getOrElse(left.isEmpty() && right.isEmpty())
+                || left.min().mapEmpty().flatMap(ignore -> right.min().map(rMin -> lt(value, rMin))).getOrElse(false)
+                || right.min().mapEmpty().flatMap(ignore -> left.max().map(lMax -> lt(lMax, value))).getOrElse(false);
+    }
+
+    public abstract RBTree<A> merge(RBTree<A> that);
+
     /**
      * This class represents the empty node of a tree. It's just named E for
      * convenience.
@@ -164,6 +195,16 @@ public abstract class RBTree<A extends Comparable<A>> {
         @Override
         public int height() {
             return -1;
+        }
+
+        @Override
+        public Result<A> max() {
+            return Result.empty();
+        }
+
+        @Override
+        public Result<A> min() {
+            return Result.empty();
         }
 
         @Override
@@ -261,6 +302,9 @@ public abstract class RBTree<A extends Comparable<A>> {
             return identity;
         }
 
+        @Override
+        public RBTree<A> merge(RBTree<A> that) { return that; }
+
     }
 
     private static class T<A extends Comparable<A>> extends RBTree<A> {
@@ -318,6 +362,16 @@ public abstract class RBTree<A extends Comparable<A>> {
         @Override
         public int height() {
             return height;
+        }
+
+        @Override
+        public Result<A> max() {
+            return right.max().orElse(() -> Result.success(value));
+        }
+
+        @Override
+        public Result<A> min() {
+            return left.min().orElse(() -> Result.success(value));
         }
 
         @Override
@@ -416,6 +470,24 @@ public abstract class RBTree<A extends Comparable<A>> {
         public <B> B foldPostOrderRight(B identity, Function<B, Function<B, Function<A, B>>> f) {
             return f.apply(right.foldPostOrderRight(identity, f)).apply(left.foldPostOrderRight(identity, f)).apply(value);
         }
+
+        @Override
+        public RBTree<A> merge(RBTree<A> that) {
+            if (that.isEmpty()) {
+                return this;
+            }
+            if (that.value().compareTo(value) > 0) {
+                return RBTree.<A>empty().balance(R, left, value,
+                        right.merge(RBTree.<A>empty().balance(R, empty(), that.value(), that.right()))).merge(that.left());
+            }
+            if (that.value().compareTo(value) < 0) {
+                return RBTree.<A>empty().balance(R, left.merge(RBTree.<A>empty().balance(R, that.left(), that.value(),
+                        empty())), value,
+                        right).merge(that.right());
+            }
+
+            return RBTree.<A>empty().balance(R, left.merge(that.left()), value, right.merge(that.right()));
+        }
     }
 
     /**
@@ -466,6 +538,54 @@ public abstract class RBTree<A extends Comparable<A>> {
     @SuppressWarnings("unchecked")
     public static <A extends Comparable<A>> RBTree<A> empty() {
         return E;
+    }
+
+    @SafeVarargs
+    public static <A extends Comparable<A>> RBTree<A> tree(A... as) {
+        return tree(list(as));
+    }
+
+    public static <A extends Comparable<A>> RBTree<A> tree(List<A> as) {
+        return as.foldLeft(empty(), acc -> acc::insert);
+    }
+
+    public static <A extends Comparable<A>> RBTree<A> tree(RBTree<A> t1, A a, RBTree<A> t2) {
+        return ordered(t1, a, t2)
+                ? E.balance(R, t1, a, t2)
+                : ordered(t2, a, t1)
+                ? E.balance(R, t2, a, t1)
+                : RBTree.<A>empty().insert(a).merge(t1).merge(t2);
+    }
+
+    private static <A extends Comparable<A>> boolean areRedNodesInOrder(RBTree<A> tree) {
+        return tree.isEmpty()
+                ? true
+                : (tree.isR() && tree.left().isB()) || (tree.isR() && tree.right().isB()) || tree.isB()
+                ? areRedNodesInOrder(tree.left()) && areRedNodesInOrder(tree.right())
+                : false;
+    }
+
+    public static <A extends Comparable<A>> boolean isValidTree(RBTree<A> tree) {
+        var res = areRedNodesInOrder(tree);
+
+        if (res) {
+            var paths =paths(tree);
+            var blackCounts = paths.map(s -> s.chars().filter(ch -> ch == 'B').count());
+            return blackCounts.foldLeft(true, false, acc -> v -> v.equals(blackCounts.head()))._1;
+        }
+
+        return res;
+    }
+
+    private static <A extends Comparable<A>> List<String> paths(RBTree<A> tree) {
+        if (tree.isEmpty()) {
+            return list("B");
+        }
+
+        var leftPaths = paths(tree.left());
+        var rightPaths = paths(tree.right());
+
+        return leftPaths.concat(rightPaths).map(s -> s + (tree.isB() ? "B" : "E"));
     }
 }
 
