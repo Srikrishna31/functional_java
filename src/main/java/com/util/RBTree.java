@@ -565,6 +565,13 @@ public abstract class RBTree<A extends Comparable<A>> {
                 : false;
     }
 
+    /**
+     * Given a redblack tree, checks if all the constraints for the redblack tree
+     * are satisfied.
+     * @param tree : The tree to be checked for validity
+     * @param <A> : Type parameter of the elements of the tree
+     * @return true if the tree is a valid redblack tree, false otherwise.
+     */
     public static <A extends Comparable<A>> boolean isValidTree(RBTree<A> tree) {
         var res = areRedNodesInOrder(tree);
 
@@ -578,6 +585,8 @@ public abstract class RBTree<A extends Comparable<A>> {
     }
 
     private static <A extends Comparable<A>> List<String> paths(RBTree<A> tree) {
+        //This method is identical in structure to fold, but since this operates
+        // on the metadata of the tree, fold cannot be used.
         if (tree.isEmpty()) {
             return list("B");
         }
