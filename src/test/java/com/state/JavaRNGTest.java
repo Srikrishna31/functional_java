@@ -114,4 +114,12 @@ public class JavaRNGTest {
         Tuple<Integer, RNG> t = Random.integer.apply(result._2);
         assertEquals(Integer.valueOf(-1155484576), t._1);
     }
+
+    @Test
+    public void testFlatMap() {
+        RNG rng = JavaRNG.rng(0);
+        Tuple<List<Integer>, RNG> result =
+                Random.sequence(List.fill(300, () -> Random.notMultipleOfFiveRnd)).apply(rng);
+        assertTrue(result._1.forAll(i -> i % 5 != 0));
+    }
 }
