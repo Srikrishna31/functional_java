@@ -155,9 +155,10 @@ public abstract class RBTree<A extends Comparable<A>> {
         return foldLeft(list(), l -> l::cons, a-> b-> a.concat(b));
     }
 
-    public <B extends Comparable<B>> RBTree<B> map(Function<A, B> f) {
-        return foldInOrderLeft(empty(), t1 -> a -> t2 -> tree(t1, f.apply(a), t2));
-    }
+    //TODO: Uncomment this function once the join functions have been written out
+//    public <B extends Comparable<B>> RBTree<B> map(Function<A, B> f) {
+//        return foldInOrderLeft(empty(), t1 -> a -> t2 -> tree(t1, f.apply(a), t2));
+//    }
 
     public static <A extends Comparable<A>> boolean lt(A first, A second) {
         return first.compareTo(second) < 0;
@@ -174,6 +175,9 @@ public abstract class RBTree<A extends Comparable<A>> {
     }
 
     public abstract RBTree<A> merge(RBTree<A> that);
+
+    protected abstract RBTree<A> rotateLeft();
+    protected abstract RBTree<A> rotateRight();
 
     /**
      * This class represents the empty node of a tree. It's just named E for
@@ -305,6 +309,15 @@ public abstract class RBTree<A extends Comparable<A>> {
         @Override
         public RBTree<A> merge(RBTree<A> that) { return that; }
 
+        @Override
+        public RBTree<A> rotateLeft() {
+            return this;
+        }
+
+        @Override
+        public RBTree<A> rotateRight() {
+            return this;
+        }
     }
 
     private static class T<A extends Comparable<A>> extends RBTree<A> {
@@ -410,7 +423,8 @@ public abstract class RBTree<A extends Comparable<A>> {
 
         @Override
         public <B> B foldLeft(B identity, Function<B, Function<A, B>> f, Function<B, Function<B, B>> g) {
-            /** There can be 6 possible implementations:
+            /**
+             * There can be 6 possible implementations:
              * Post order left
              * Pre order left
              * In order left
@@ -426,7 +440,8 @@ public abstract class RBTree<A extends Comparable<A>> {
 
         @Override
         public <B> B foldRight(B identity, Function<A, Function<B, B>> f, Function<B, Function<B, B>> g) {
-            /** There can be 6 possible implementations:
+            /**
+             * There can be 6 possible implementations:
              * Post order left
              * Pre order left
              * In order left
@@ -476,17 +491,36 @@ public abstract class RBTree<A extends Comparable<A>> {
             if (that.isEmpty()) {
                 return this;
             }
+
             if (that.value().compareTo(value) > 0) {
-                return RBTree.<A>empty().balance(R, left, value,
-                        right.merge(RBTree.<A>empty().balance(R, empty(), that.value(), that.right()))).merge(that.left());
+                return balance(R, left, value,
+                        right.merge(balance(R, empty(), that.value(), that.right()))).merge(that.left());
             }
             if (that.value().compareTo(value) < 0) {
-                return RBTree.<A>empty().balance(R, left.merge(RBTree.<A>empty().balance(R, that.left(), that.value(),
+                return balance(R, left.merge(balance(R, that.left(), that.value(),
                         empty())), value,
                         right).merge(that.right());
             }
 
-            return RBTree.<A>empty().balance(R, left.merge(that.left()), value, right.merge(that.right()));
+            return balance(R, left.merge(that.left()), value, right.merge(that.right()));
+        }
+
+        @Override
+        protected RBTree<A> rotateLeft() {
+            if (right.isEmpty()) {
+                 return this;
+            }
+
+            return balance(R, balance(R, left, value, right.left()), right.value(), right.right());
+        }
+
+        @Override
+        protected RBTree<A> rotateRight() {
+            if (left.isEmpty()) {
+                return this;
+            }
+
+            return balance(R, left.left(), left.value(), balance(R, left.right(), value, right));
         }
     }
 
@@ -506,6 +540,8 @@ public abstract class RBTree<A extends Comparable<A>> {
         boolean isR() {
             return true;
         }
+
+
 
         @Override
         boolean isB() {
@@ -549,13 +585,23 @@ public abstract class RBTree<A extends Comparable<A>> {
         return as.foldLeft(empty(), acc -> acc::insert);
     }
 
-    public static <A extends Comparable<A>> RBTree<A> tree(RBTree<A> t1, A a, RBTree<A> t2) {
-        return ordered(t1, a, t2)
-                ? E.balance(R, t1, a, t2)
-                : ordered(t2, a, t1)
-                ? E.balance(R, t2, a, t1)
-                : RBTree.<A>empty().insert(a).merge(t1).merge(t2);
-    }
+
+    //TODO: Write the join algorithm for RBTrees, which is described in this paper :
+    // https://www.cs.cmu.edu/~guyb/papers/BFS16.pdf
+    // and here: https://stackoverflow.com/questions/43697546/best-way-to-join-two-red-black-trees
+    // and here: https://en.wikipedia.org/wiki/Red%E2%80%93black_tree#Set_operations_and_bulk_operations
+//    public static <A extends Comparable<A>> RBTree<A> tree(RBTree<A> t1, A a, RBTree<A> t2) {
+//        var heightLeft = t1.height();
+//        var heightRight = t2.height();
+//
+//        return heightLeft > heightRight + 1 ? joinRight(t1, a, t2) : heightRight > heightLeft + 1 ? joinLeft(t1, a,
+//                t2) : new T<>()
+//        return ordered(t1, a, t2)
+//                ? E.balance(R, t1, a, t2)
+//                : ordered(t2, a, t1)
+//                ? E.balance(R, t2, a, t1)
+//                : RBTree.<A>empty().insert(a).merge(t1).merge(t2);
+//    }
 
     private static <A extends Comparable<A>> boolean areRedNodesInOrder(RBTree<A> tree) {
         return tree.isEmpty()
@@ -594,7 +640,10 @@ public abstract class RBTree<A extends Comparable<A>> {
         var leftPaths = paths(tree.left());
         var rightPaths = paths(tree.right());
 
-        return leftPaths.concat(rightPaths).map(s -> s + (tree.isB() ? "B" : "E"));
+        return leftPaths.concat(rightPaths).map(s -> s + (tree.isB() ? "B" : "R"));
     }
+
+    //TODO: Write the functional ne removal algorithm for RBTrees described here:
+    // https://matt.might.net/articles/red-black-delete/
 }
 

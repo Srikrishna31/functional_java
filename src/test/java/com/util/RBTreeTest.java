@@ -245,4 +245,76 @@ public class RBTreeTest {
         assertEquals("7654321", tree.foldPostOrderLeft("", f));
     }
 
+    //TODO: Uncomment and fix after adding the join/merge and remove functions to RBTree.
+//    @Test
+//    public void testTreeFold1() {
+//        List<Integer> list = List.list(4, 6, 7, 5, 2, 1, 3);
+//        var tree0 = RBTree.tree(list);
+//        var tree1 = tree0.foldInOrderLeft(RBTree.<Integer>empty(), t1 -> i -> t2 -> RBTree.tree(t1, i, t2));
+//        assertEquals(tree0.toString(), tree1.toString());
+//        var tree2 = tree0.foldPostOrderLeft(RBTree.<Integer>empty(), t1 -> t2 -> i -> RBTree.tree(t1, i, t2));
+//        assertEquals(tree0.toString(), tree2.toString());
+//        var tree3 = tree0.foldPreOrderLeft(RBTree.<Integer>empty(), i -> t1 -> t2 -> RBTree.tree(t1, i, t2));
+//        assertEquals(tree0.toString(), tree3.toString());
+//    }
+
+//    @Test
+//    public void testMergeLeftEmptyNok() {
+//        var tree = RBTree.tree(4, 6, 7, 5, 2, 1, 0);
+//        var result = RBTree.tree(RBTree.empty(), 4, tree);
+//        assertEquals("(T (T (T (T E 0 E) 1 E) 2 E) 4 (T (T E 5 E) 6 (T E 7 E)))", result.toString());
+//    }
+//
+//    @Test
+//    public void testMergeRightEmpty() {
+//        var tree = RBTree.tree(4, 6, 7, 5, 2, 1, 0);
+//        var result = RBTree.tree(tree, 4, RBTree.<Integer>empty());
+//        assertEquals("(T (T (T (T E 0 E) 1 E) 2 E) 4 (T (T E 5 E) 6 (T E 7 E)))", result.toString());
+//    }
+//
+//    @Test
+//    public void testMergeNok() {
+//        var tree1 = RBTree.tree(4, 6, 7, 5, 2);
+//        var tree2 = RBTree.tree(7, 5, 2, 1, 0);
+//        var result = RBTree.tree(tree1, 4, tree2);
+//        assertEquals("(T (T (T (T E 0 E) 1 E) 2 E) 4 (T (T E 5 E) 6 (T E 7 E)))", result.toString());
+//    }
+//
+//    @Test
+//    public void testMergeEmpty() {
+//        var result = RBTree.tree(RBTree.<Integer>empty(), 4, RBTree.<Integer>empty());
+//        assertEquals("(T B E 4 E)", result.toString());
+//    }
+//
+//    @Test
+//    public void testMerge() {
+//        var tree1 = RBTree.tree(2, 1, 3);
+//        var tree2 = RBTree.tree(6, 5, 7);
+//        var result = RBTree.tree(tree1, 4, tree2);
+//        assertEquals("(T (T (T E 1 E) 2 (T E 3 E)) 4 (T (T E 5 E) 6 (T E 7 E)))", result.toString());
+//        assertEquals("[4, 2, 1, 3, 6, 5, 7, NIL]", result.foldPreOrderLeft(List.<Integer>list(),
+//                i -> l1 -> l2 -> List.list(i).concat(l1).concat(l2)).toString());
+//    }
+//
+//    @Test
+//    public void testMergeInverseOrder() {
+//        var tree1 = RBTree.tree(2, 1, 3);
+//        var tree2 = RBTree.tree(6, 5, 7);
+//        var result = RBTree.tree(tree2, 4, tree1);
+//        assertEquals("(T (T (T E 1 E) 2 (T E 3 E)) 4 (T (T E 5 E) 6 (T E 7 E)))", result.toString());
+//        assertEquals("[4, 2, 1, 3, 6, 5, 7, NIL]", result.foldPreOrderLeft(List.<Integer>list(),
+//                i -> l1 -> l2 -> List.list(i).concat(l1).concat(l2)).toString());
+//    }
+//
+//    @Test
+//    public void testMap() {
+//        var tree = RBTree.tree(2,1,3);
+//        var res = tree.map(Double::valueOf);
+//
+//        System.out.println(res);
+//
+//        assertEquals("(T (T E 1.0 E) 2.0 (T E 3.0 E))", res.toString());
+//    }
+
 }
+
