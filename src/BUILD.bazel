@@ -21,6 +21,7 @@ java_library(
         "main/java/com/state/Generator.java",
         "main/java/com/state/JavaRNG.java",
         "main/java/com/state/RNG.java",
+        "main/java/com/state/Random.java",
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/Either.java",
         "main/java/com/util/List.java",
