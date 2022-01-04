@@ -35,10 +35,7 @@ public interface Random<A> extends Function<RNG, Tuple<A, RNG>>{
      * @return the transformed Random generator of type B.
      */
     static <A, B> Random<B> map(Random<A> a, Function<A, B> f) {
-        return rng -> {
-            var res = a.apply(rng);
-            return Tuple.create(f.apply(res._1), res._2);
-        };
+        return flatMap(a, v -> unit(f.apply(v)));
     }
 
     Random<Boolean> booleanRnd = Random.map(integer, i -> i % 2 == 0);
@@ -48,8 +45,8 @@ public interface Random<A> extends Function<RNG, Tuple<A, RNG>>{
     /**
      * This is a convenience function to map two random generators into a third
      * generator.
-     * @param a  : Random generator of type A.
-     * @param b : Random generator of type B.
+     * @param ra  : Random generator of type A.
+     * @param rb : Random generator of type B.
      * @param f : A curried function that takes values of type A and B and returns
      *          a value of type B.
      * @param <A> : Type parameter A.
@@ -57,13 +54,8 @@ public interface Random<A> extends Function<RNG, Tuple<A, RNG>>{
      * @param <C> : Type parameter C.
      * @return the transformed Random generator of type C.
      */
-    static <A, B, C> Random<C> map2(Random<A> a, Random<B> b, Function<A, Function<B, C>> f) {
-        return rng -> {
-            var res1 = a.apply(rng);
-            var res2 = b.apply(res1._2);
-
-            return Tuple.create(f.apply(res1._1).apply(res2._1), res2._2);
-        };
+    static <A, B, C> Random<C> map2(Random<A> ra, Random<B> rb, Function<A, Function<B, C>> f) {
+        return flatMap(ra, a -> map(rb, b -> f.apply(a).apply(b)));
     }
 
     Random<Tuple<Integer, Integer>> intPairRnd = map2(integer, integer, x -> y -> Tuple.create(x,y));
