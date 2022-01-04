@@ -78,6 +78,32 @@ public abstract class List<A> {
                 foldLeft(new StringBuilder(), acc -> v -> acc.append(v).append(", ")));
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!( o instanceof List)) return false;
+
+        List that = (List) o;
+        class EqualsHelper {
+            TailCall<Boolean> go(List l1, List l2) {
+                if (l1.isEmpty() && !l2.isEmpty() || !l1.isEmpty() && l2.isEmpty()) {
+                    return ret(false);
+                } else if(l1.isEmpty() && l2.isEmpty()) {
+                    return ret(true);
+                } else {
+                    return l1.head().equals(l2.head()) ? go(l1.tail(), l2.tail()) : ret(false);
+                }
+            }
+        }
+
+        return new EqualsHelper().go(this, that).eval();
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        return foldLeft(1, acc -> v -> acc * prime + v.hashCode());
+    }
+
     /**
      * This is more general method compared to tail method - which removes just
      * the first element.

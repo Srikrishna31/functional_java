@@ -17,4 +17,5 @@ TARGETS = [
     ("stream", "test/java/com/lazy/StreamTest.java", "com.lazy.StreamTest"),
     ("tree", "test/java/com/util/TreeTest.java", "com.util.TreeTest"),
     ("rbtree", "test/java/com/util/RBTreeTest.java", "com.util.RBTreeTest"),
+    ("rng", "test/java/com/state/JavaRNGTest.java", "com.state.JavaRNGTest"),
 ]
