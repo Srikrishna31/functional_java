@@ -18,4 +18,5 @@ TARGETS = [
     ("tree", "test/java/com/util/TreeTest.java", "com.util.TreeTest"),
     ("rbtree", "test/java/com/util/RBTreeTest.java", "com.util.RBTreeTest"),
     ("rng", "test/java/com/state/JavaRNGTest.java", "com.state.JavaRNGTest"),
+    ("state", "test/java/com/state/StateTest.java", "com.state.StateTest"),
 ]
