@@ -25,6 +25,7 @@ java_library(
         "main/java/com/state/Condition.java",
         "main/java/com/state/RNG.java",
         "main/java/com/state/Random.java",
+        "main/java/com/state/SimpleRNG.java",
         "main/java/com/state/State.java",
         "main/java/com/state/StateMachine.java",
         "main/java/com/state/Transition.java",
