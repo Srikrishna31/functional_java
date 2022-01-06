@@ -273,6 +273,11 @@ public class ListTest {
         assertEquals(list(30,60,90,120,150,180,210,240,270).toString(), res.getOrElse(list()).toString());
     }
 
-    //TOOD: Write benchhmark tests for Parallel fold and parallel map.
+    @Test
+    public void testForEach() {
+        var list = List.range(0, 100);
+        list.forEach(System.out::println);
+    }
+    //TODO: Write benchmark tests for Parallel fold and parallel map.
 }
 

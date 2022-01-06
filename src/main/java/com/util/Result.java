@@ -157,7 +157,6 @@ public abstract class Result<T> implements Serializable {
      * @return the transformed failure object if the original object was a
      * empty object, otherwise this.
      */
-
     public abstract Result<T> mapEmpty(String e);
 
 
@@ -282,6 +281,17 @@ public abstract class Result<T> implements Serializable {
         return map(v -> f.apply(identity).apply(v)).getOrElse(identity);
     }
 
+    /**
+     * This function applies the given effect to the Result, if it is a success.
+     * If the object is a failure, this function wraps the message in another
+     * result object and returns it. For Success and Empty objects, this function
+     * returns empty.
+     * @param f: The effect to be applied to the success object.
+     * @return the Result object, which contains the failure message if the object
+     * is a failure, empty otherwise.
+     */
+    public abstract Result<String> forEachOrFail(Effect<T> f);
+
     private static class Success<T> extends Result<T> {
         private final T value;
 
@@ -364,6 +374,13 @@ public abstract class Result<T> implements Serializable {
         public boolean isEmpty() {
             return false;
         }
+
+        @Override
+        public Result<String> forEachOrFail(Effect<T> ef) {
+            ef.apply(value);
+
+            return empty();
+        }
     }
 
     private static class Failure<T> extends Empty<T> {
@@ -433,6 +450,11 @@ public abstract class Result<T> implements Serializable {
         @Override
         public boolean isEmpty() {
             return false;
+        }
+
+        @Override
+        public Result<String> forEachOrFail(Effect<T> ef) {
+            return success(error.getMessage());
         }
     }
 
@@ -504,6 +526,11 @@ public abstract class Result<T> implements Serializable {
         @Override
         public boolean isEmpty() {
             return true;
+        }
+
+        @Override
+        public Result<String> forEachOrFail(Effect<T> ef) {
+            return empty();
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.util;
 
+import com.functional.Effect;
 import com.functional.TailCall;
 import com.functional.Function;
 import com.functional.Tuple;
+import com.state.Nothing;
 
 import static com.util.Result.empty;
 import static com.util.Result.success;
@@ -818,6 +820,13 @@ public abstract class List<A> {
         return parFoldLeft(es, list(), acc -> v -> acc.cons(f.apply(v)), l1 -> l2 -> concat(l1, l2));
     }
 
+    /**
+     * Applies the given effect to each element of the list.
+     * @param ef : The effect to be applied.
+     */
+    public abstract void forEach(Effect<A> ef);
+
+
     private static class Nil<A> extends List<A> {
         private Nil() {}
 
@@ -846,6 +855,9 @@ public abstract class List<A> {
         public Result<A> headOption() {
             return failure("head called on empty list.");
         }
+
+        @Override
+        public void forEach(Effect<A> ef) {};
     }
 
     private static class Cons<A> extends List<A> {
@@ -879,6 +891,21 @@ public abstract class List<A> {
         @Override
         public Result<A> headOption() {
             return success(head);
+        }
+
+        @Override
+        public void forEach(Effect<A> ef) {
+            class ForEachHelper {
+                TailCall<Nothing> go(List<A> ls) {
+                    return ls.isEmpty() ?
+                        ret(Nothing.instance)
+                            : sus (() -> {
+                        ef.apply(ls.head());
+                        return sus(() -> go(ls.tail()));
+                    });
+                }
+            }
+            new ForEachHelper().go(this).eval();
         }
     }
 
