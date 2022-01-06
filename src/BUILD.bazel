@@ -11,6 +11,7 @@ java_library(
         "main/java/com/functional/Executable.java",
         "main/java/com/functional/Function.java",
         "main/java/com/functional/QuadFunction.java",
+        "main/java/com/functional/StateTuple.java",
         "main/java/com/functional/TailCall.java",
         "main/java/com/functional/Tuple.java",
         "main/java/com/functional/Tuple3.java",
@@ -20,9 +21,13 @@ java_library(
         "main/java/com/misc/MemoryMonitor.java",
         "main/java/com/state/Generator.java",
         "main/java/com/state/JavaRNG.java",
+        "main/java/com/state/Nothing.java",
+        "main/java/com/state/Condition.java",
         "main/java/com/state/RNG.java",
         "main/java/com/state/Random.java",
         "main/java/com/state/State.java",
+        "main/java/com/state/StateMachine.java",
+        "main/java/com/state/Transition.java",
         "main/java/com/util/CollectionUtilities.java",
         "main/java/com/util/Either.java",
         "main/java/com/util/List.java",
@@ -32,20 +37,30 @@ java_library(
         "main/java/com/util/RBTree.java",
         "main/java/com/util/Result.java",
         "main/java/com/util/Tree.java",
-        "main/java/com/state/Nothing.java",
     ],
 )
 
+java_library(
+    name = "atm_simulator",
+    srcs = [
+        "test/java/com/state/Atm.java",
+        "test/java/com/state/Deposit.java",
+        "test/java/com/state/WithDraw.java",
+        "test/java/com/state/Input.java",
+        "test/java/com/state/Outcome.java"
+    ],
+    deps = [
+        ":functional_java"
+    ]
+)
 [
     java_test(
         name = "test_" + name,
-        srcs = [
-            file,
-        ],
+        srcs = files,
         test_class = clas,
         deps = [
             ":functional_java",
-        ],
+        ] + dependencies,
     )
-    for name, file, clas in TARGETS
+    for name, files, clas, dependencies in TARGETS
 ]

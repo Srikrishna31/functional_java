@@ -3,6 +3,8 @@ package com.state;
 import com.functional.Tuple;
 import com.functional.Function;
 
+import static com.functional.Tuple.create;
+
 import com.util.List;
 
 /**
@@ -93,6 +95,9 @@ public class State<A,S> {
         return ss.foldRight(unit(List.list()), v -> acc -> v.map2(acc, l -> ls -> ls.cons(l)));
     }
 
+    public static <S> State<Nothing, S> sequence(Function<S, S> f) {
+        return new State<>(s -> Tuple.create(Nothing.instance, f.apply(s)));
+    }
     /**
      * A convenience function which modifies the state and returns it
      * @param f : A function that takes an existing state and returns a new state.
@@ -123,5 +128,25 @@ public class State<A,S> {
      */
     public static <S> State<Nothing, S> set(S s) {
         return new State<>(x -> Tuple.create(Nothing.instance, s));
+    }
+
+    /**
+     * An alias for sequence method.
+     * @param fs : List of state functions.
+     * @param <S> : The type parameter of the state object.
+     * @param <A> : Type parameter of the values generated.
+     * @return the list of values generated after calling the state functions.
+     */
+    public static <S, A> State<List<A>, S> compose(List<State<A, S>> fs) {
+        return sequence(fs);
+    }
+
+    /**
+     * Convenience method to return a value after applying the given state.
+     * @param s : The state object, which will be applied to the state generator.
+     * @return the value after applying the state.
+     */
+    public A eval(S s) {
+        return run.apply(s)._1;
     }
 }
