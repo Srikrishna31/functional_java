@@ -60,41 +60,36 @@ java_library(
     visibility = ["//visibility:private"]
 )
 
-java_test(
-    name = "console_io",
+java_library(
+    name = "person",
     srcs = [
         "test/java/com/io/Person.java",
-        "test/java/com/io/ReadConsole.java",
-        "test/java/com/io/TestReader.java"
     ],
     deps = [
-        ":functional_java",
-        "@maven//:junit_junit"
-    ],
-    test_class = "com.io.TestReader",
-    visibility = [
-        "//visibility:private",
-    ]
-)
-
-java_test (
-    name = "file_io",
-    srcs = [
-        "test/java/com/io/Person.java",
-        "test/java/com/io/ReadFile.java",
-        "test/java/com/io/ReadConsole.java",
-    ],
-    deps = [
-        ":functional_java",
-        "@maven//:junit_junit",
-        "@bazel_tools//tools/java/runfiles:runfiles"
-    ],
-    test_class = "com.io.ReadFile",
+            ":functional_java",
+        ],
     resources = [
         "//src/test/resources:persons_io",
     ],
     visibility = [
         "//visibility:private"
+    ]
+)
+
+java_test(
+    name = "console_io",
+    srcs = [
+        "test/java/com/io/ReadConsole.java",
+        "test/java/com/io/TestReader.java"
+    ],
+    deps = [
+        ":functional_java",
+        "@maven//:junit_junit",
+        ":person"
+    ],
+    test_class = "com.io.TestReader",
+    visibility = [
+        "//visibility:private",
     ]
 )
 

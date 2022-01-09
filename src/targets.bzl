@@ -22,4 +22,5 @@ TARGETS = [
     ("rbtree", ["test/java/com/util/RBTreeTest.java"], "com.util.RBTreeTest", []),
     ("rng", ["test/java/com/state/JavaRNGTest.java"], "com.state.JavaRNGTest", []),
     ("state", ["test/java/com/state/StateTest.java"], "com.state.StateTest", [":atm_simulator"]),
+    ("fileio", ["test/java/com/io/ReadFile.java"], "com.io.ReadFile", [":person"]),
 ]
