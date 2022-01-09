@@ -20,6 +20,7 @@ java_library(
         "main/java/com/io/AbstractReader.java",
         "main/java/com/io/Input.java",
         "main/java/com/io/ConsoleReader.java",
+        "main/java/com/io/FileReader.java",
         "main/java/com/lazy/Stream.java",
         "main/java/com/misc/MemoryMonitor.java",
         "main/java/com/state/Generator.java",
@@ -61,18 +62,44 @@ java_library(
 
 java_test(
     name = "console_io",
-    srcs = ["test/java/com/io/Person.java",
-            "test/java/com/io/ReadConsole.java",
-            "test/java/com/io/TestReader.java"
-            ],
+    srcs = [
+        "test/java/com/io/Person.java",
+        "test/java/com/io/ReadConsole.java",
+        "test/java/com/io/TestReader.java"
+    ],
     deps = [
-        ":functional_java"
+        ":functional_java",
+        "@maven//:junit_junit"
     ],
     test_class = "com.io.TestReader",
     visibility = [
         "//visibility:private",
     ]
 )
+
+java_test (
+    name = "file_io",
+    srcs = [
+        "test/java/com/io/Person.java",
+        "test/java/com/io/ReadFile.java",
+        "test/java/com/io/ReadConsole.java",
+    ],
+    deps = [
+        ":functional_java",
+        "@maven//:junit_junit"
+    ],
+    test_class = "com.io.ReadFile",
+    data = [
+        "//src/test/resources:persons_io",
+    ],
+    resources = [
+        "//src/test/resources:persons_io",
+    ],
+    visibility = [
+        "//visibility:private"
+    ]
+)
+
 [
     java_test(
         name = "test_" + name,
@@ -80,7 +107,11 @@ java_test(
         test_class = clas,
         deps = [
             ":functional_java",
+            "@maven//:junit_junit"
         ] + dependencies,
+        visibility = [
+            "//visibility:private"
+        ]
     )
     for name, files, clas, dependencies in TARGETS
 ]

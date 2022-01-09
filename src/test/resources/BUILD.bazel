@@ -1,0 +1,8 @@
+filegroup(
+    name = "persons_io",
+    srcs = [
+        "data.txt"
+    ],
+#    visibility = ["//src:__pkg__"],
+    visibility = ["//visibility:public"]
+)
