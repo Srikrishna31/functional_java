@@ -1,9 +1,8 @@
 package com.state;
 
+import com.functional.Nothing;
 import com.functional.Tuple;
 import com.functional.Function;
-
-import static com.functional.Tuple.create;
 
 import com.util.List;
 

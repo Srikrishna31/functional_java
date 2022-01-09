@@ -10,6 +10,7 @@ java_library(
         "main/java/com/functional/Effect.java",
         "main/java/com/functional/Executable.java",
         "main/java/com/functional/Function.java",
+        "main/java/com/functional/Nothing.java",
         "main/java/com/functional/QuadFunction.java",
         "main/java/com/functional/StateTuple.java",
         "main/java/com/functional/TailCall.java",
@@ -18,15 +19,16 @@ java_library(
         "main/java/com/functional/Tuple4.java",
         "main/java/com/functional/Tuple5.java",
         "main/java/com/io/AbstractReader.java",
-        "main/java/com/io/Input.java",
+        "main/java/com/io/Console.java",
         "main/java/com/io/ConsoleReader.java",
         "main/java/com/io/FileReader.java",
+        "main/java/com/io/IO.java",
+        "main/java/com/io/Input.java",
         "main/java/com/lazy/Stream.java",
         "main/java/com/misc/MemoryMonitor.java",
+        "main/java/com/state/Condition.java",
         "main/java/com/state/Generator.java",
         "main/java/com/state/JavaRNG.java",
-        "main/java/com/state/Nothing.java",
-        "main/java/com/state/Condition.java",
         "main/java/com/state/RNG.java",
         "main/java/com/state/Random.java",
         "main/java/com/state/SimpleRNG.java",
@@ -50,14 +52,14 @@ java_library(
     srcs = [
         "test/java/com/state/Atm.java",
         "test/java/com/state/Deposit.java",
-        "test/java/com/state/WithDraw.java",
         "test/java/com/state/Input.java",
-        "test/java/com/state/Outcome.java"
+        "test/java/com/state/Outcome.java",
+        "test/java/com/state/WithDraw.java",
     ],
+    visibility = ["//visibility:private"],
     deps = [
-        ":functional_java"
+        ":functional_java",
     ],
-    visibility = ["//visibility:private"]
 )
 
 java_library(
@@ -65,32 +67,47 @@ java_library(
     srcs = [
         "test/java/com/io/Person.java",
     ],
-    deps = [
-            ":functional_java",
-        ],
     resources = [
         "//src/test/resources:persons_io",
     ],
     visibility = [
-        "//visibility:private"
-    ]
+        "//visibility:private",
+    ],
+    deps = [
+        ":functional_java",
+    ],
 )
 
 java_test(
     name = "console_io",
     srcs = [
         "test/java/com/io/ReadConsole.java",
-        "test/java/com/io/TestReader.java"
-    ],
-    deps = [
-        ":functional_java",
-        "@maven//:junit_junit",
-        ":person"
+        "test/java/com/io/TestReader.java",
     ],
     test_class = "com.io.TestReader",
     visibility = [
         "//visibility:private",
-    ]
+    ],
+    deps = [
+        ":functional_java",
+        ":person",
+        "@maven//:junit_junit",
+    ],
+)
+
+java_test(
+    name = "console_test_io",
+    srcs = [
+        "test/java/com/io/ConsoleTest.java",
+    ],
+    test_class = "com.io.ConsoleTest",
+    visibility = [
+        "//visibility:private",
+    ],
+    deps = [
+        ":functional_java",
+        "@maven//:junit_junit",
+    ],
 )
 
 [
@@ -98,13 +115,13 @@ java_test(
         name = "test_" + name,
         srcs = files,
         test_class = clas,
+        visibility = [
+            "//visibility:private",
+        ],
         deps = [
             ":functional_java",
-            "@maven//:junit_junit"
+            "@maven//:junit_junit",
         ] + dependencies,
-        visibility = [
-            "//visibility:private"
-        ]
     )
     for name, files, clas, dependencies in TARGETS
 ]

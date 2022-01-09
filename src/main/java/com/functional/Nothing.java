@@ -1,4 +1,4 @@
-package com.state;
+package com.functional;
 
 /**
  * A class to represent a Nothing type, which can be useful to represent a

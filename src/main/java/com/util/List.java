@@ -4,7 +4,7 @@ import com.functional.Effect;
 import com.functional.TailCall;
 import com.functional.Function;
 import com.functional.Tuple;
-import com.state.Nothing;
+import com.functional.Nothing;
 
 import static com.util.Result.empty;
 import static com.util.Result.success;
