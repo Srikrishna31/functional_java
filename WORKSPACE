@@ -16,7 +16,7 @@ http_archive(
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 deps = [
-    "junit:junit:4.13"
+    "junit:junit:4.13.2"
 ]
 
 maven_install(

@@ -21,4 +21,19 @@ class Person {
     public String toString() {
         return String.format(FORMAT, id, firstName, lastName);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Person)) {
+            return false;
+        }
+        var that = (Person)obj;
+
+        return that.id == id && that.firstName.equals(firstName) && that.lastName.equals(lastName);
+    }
+
+    @Override
+    public int hashCode() {
+        return firstName.hashCode();
+    }
 }

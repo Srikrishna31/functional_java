@@ -86,12 +86,10 @@ java_test (
     ],
     deps = [
         ":functional_java",
-        "@maven//:junit_junit"
+        "@maven//:junit_junit",
+        "@bazel_tools//tools/java/runfiles:runfiles"
     ],
     test_class = "com.io.ReadFile",
-    data = [
-        "//src/test/resources:persons_io",
-    ],
     resources = [
         "//src/test/resources:persons_io",
     ],
