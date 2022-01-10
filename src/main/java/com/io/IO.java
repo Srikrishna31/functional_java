@@ -3,6 +3,10 @@ package com.io;
 import com.functional.Function;
 import com.functional.Nothing;
 
+import com.functional.TailCall;
+import static com.functional.TailCall.ret;
+import static com.functional.TailCall.sus;
+
 import com.lazy.Stream;
 import com.util.List;
 
@@ -13,14 +17,47 @@ import java.util.function.Supplier;
  * input and output.
  * @param <A>
  */
-public interface IO<A> {
-    A run();
+public abstract class IO<A> {
+    protected abstract boolean isReturn();
+    protected abstract boolean isSuspend();
+    protected abstract boolean isContinue();
 
-    default IO<A> add(IO<A> io) {
-        return () -> {
-            run();
-            return io.run();
-        };
+    private static IO<Nothing> EMPTY = new Suspend<>(() -> Nothing.instance);
+
+    public static IO<Nothing> empty() {
+        return EMPTY;
+    }
+
+    A run() {
+        return run(this);
+    }
+
+    public A run(IO<A> io) {
+        class RunHelper {
+            TailCall<A> go(IO<A> io) {
+                if (io.isReturn()) {
+                    return ret(((Return<A>)io).value);
+                } else if(io.isSuspend()) {
+                    return ret(((Suspend<A>) io).resume.get());
+                } else {
+                    Continue<A, A> ct = (Continue<A, A>) io;
+                    IO<A> sub = ct.sub;
+                    Function<A, IO<A>> f = ct.f;
+                    if (sub.isReturn()) {
+                        return sus(() -> go(f.apply(((Return<A>)sub).value)));
+                    } else if (sub.isSuspend()) {
+                        return sus(() -> go(f.apply(((Suspend<A>) sub).resume.get())));
+                    } else {
+                        Continue<A, A> ct2 = (Continue<A, A>) sub;
+                        IO<A> sub2 = ct2.sub;
+                        Function<A, IO<A>> f2 = ct2.f;
+                        return sus(() -> go(sub2.flatMap(x -> f2.apply(x).flatMap(f))));
+                    }
+                }
+            }
+        }
+
+        return new RunHelper().go(this).eval();
     }
 
     /**
@@ -30,10 +67,8 @@ public interface IO<A> {
      * @return the IO object.
      */
     static <A> IO<A> unit(A a) {
-        return () -> a;
+        return new Suspend<>(() -> a);
     }
-
-    IO<Nothing> empty = () -> Nothing.instance;
 
     /**
      * Transform the IO of type A to IO of type B.
@@ -41,8 +76,9 @@ public interface IO<A> {
      * @param <B> : type parameter of the result.
      * @return the transformed io object.
      */
-    default <B> IO<B> map(Function<A, B> f) {
-        return () -> f.apply(run());
+    public <B> IO<B> map(Function<A, B> f) {
+        return flatMap(f.andThen(Return::new));
+//        return () -> f.apply(run());
     }
 
     /**
@@ -53,9 +89,12 @@ public interface IO<A> {
      * @param <B>: Type parameter of the result.
      * @return the transformed io object.
      */
-    default <B> IO<B> flatMap(Function<A, IO<B>> f) {
-
-        return () -> f.apply(run()).run();
+    @SuppressWarnings("unchecked")
+    public <B> IO<B> flatMap(Function<A, IO<B>> f) {
+        //Flatmap returns a continue object that will allow to compose more
+        //io objects.
+        return (IO<B>) new Continue<>(this, f);
+        //return () -> f.apply(run()).run();
         // although below statement is a valid implementation, following the types,
         //the flatMap function is only composing the computations, and hence,
         // it should not explicitly call the run function here. This is the
@@ -89,9 +128,8 @@ public interface IO<A> {
      * @return the IO object of list of values that have been generated after
      * the application of the IO for n times.
      */
-    static <A> IO<List<A>> repeat(int n, IO<A> io) {
-        return Stream.fill(n, () -> io)
-                .foldRight(() -> unit(List.list()), v -> acc -> map2(v, acc.get(), i -> ios -> ios.cons(i)));
+    static <A> IO<Nothing> repeat(int n, IO<A> io) {
+        return forEach(Stream.fill(n, () -> io), IO::skip);
     }
 
     /**
@@ -182,6 +220,77 @@ public interface IO<A> {
     }
 
     static <A> IO<Nothing> doWhile(IO<A> ioa, Function<A, IO<Boolean>> f) {
-        return ioa.flatMap(f).flatMap(ok -> ok ? doWhile(ioa, f) : empty);
+        return ioa.flatMap(f).flatMap(ok -> ok ? doWhile(ioa, f) : empty());
+    }
+
+    final static class Return<T> extends IO<T> {
+        public final T value;
+
+        protected Return(T value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean isReturn() {
+            return true;
+        }
+
+        @Override
+        public boolean isSuspend() {
+            return false;
+        }
+
+        @Override
+        public boolean isContinue() {
+            return false;
+        }
+    }
+
+    final static class Suspend<T> extends IO<T> {
+        public final Supplier<T> resume;
+
+        protected Suspend(Supplier<T> resume) {
+            this.resume = resume;
+        }
+
+        @Override
+        public boolean isReturn() {
+            return false;
+        }
+
+        @Override
+        public boolean isSuspend() {
+            return true;
+        }
+
+        @Override
+        public boolean isContinue() {
+            return false;
+        }
+    }
+
+    final static class Continue<T, U> extends IO<T> {
+        public final IO<T> sub;
+        public final Function<T, IO<U>> f;
+
+        protected Continue(IO<T> sub, Function<T, IO<U>> f) {
+            this.sub = sub;
+            this.f = f;
+        }
+
+        @Override
+        public boolean isReturn() {
+            return false;
+        }
+
+        @Override
+        public boolean isSuspend() {
+            return false;
+        }
+
+        @Override
+        public boolean isContinue() {
+            return true;
+        }
     }
 }

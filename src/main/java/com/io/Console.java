@@ -9,19 +9,22 @@ public class Console {
     private static BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
     public static IO<String> readLine(Nothing nothing) {
-        return () -> {
+        return new IO.Suspend<>(() -> {
             try {
                 return bufferedReader.readLine();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
-        };
+        });
     }
 
+    public static IO<String> readLine() {
+        return readLine(Nothing.instance);
+    }
     public static IO<Nothing> printLine(Object o) {
-        return () -> {
+        return new IO.Suspend<>(() -> {
             System.out.println(o.toString());
             return Nothing.instance;
-        };
+        });
     }
 }

@@ -9,7 +9,7 @@ import org.junit.Test;
 public class IOTest {
     @Test
     public void testIO() {
-        var s = Stream.fill(3, () -> IO.empty);
+        var s = Stream.fill(3, () -> IO.empty());
         IO program = IO.repeat(3, sayHello());
 
         program.run();
@@ -28,6 +28,7 @@ public class IOTest {
 
     //TODO: Fix the nullpointer exception, by figuring out how to provide console
     //input to the tests in bazel.
+
     @Test(expected = NullPointerException.class)
     public void testWhen() {
         IO program = program(buildWhenMessage, "Enter the names of the persons to welcome: ");
@@ -44,5 +45,14 @@ public class IOTest {
                 IO.doWhile(Console.readLine(Nothing.instance), f),
                 Console.printLine("bye!")
         );
+    }
+
+    @Test
+    public void testForever() {
+        IO program = IO.forever(IO.unit("Hi again!")
+                        .flatMap(Console::printLine));
+
+        //This line will cause the printing go on forever.
+        //program.run();
     }
 }
