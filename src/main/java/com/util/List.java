@@ -952,5 +952,16 @@ public abstract class List<A> {
 
         return new ListHelper().go(list(), as.length - 1).eval();
     }
+
+    /**
+     * A renaming of list method. This method does the same thing as list(a...).
+     * @param as : The array of objects to be wrapped in List.
+     * @param <A> : Type parameter of the values in the array.
+     * @return the List object, which contains the elements passed in the array.
+     */
+    @SafeVarargs
+    public static <A> List<A> of(A... as) {
+        return list(as);
+    }
 }
 
