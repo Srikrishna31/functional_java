@@ -7,8 +7,12 @@
 TARGETS = [
     #TODO: Figure out a way to initialize dependencies variable if the list is not empty
     ("case", ["test/java/com/functional/CaseTest.java"], "com.functional.CaseTest", []),
-    ("collectionutilities", ["test/java/com/util/CollectionUtilitiesTest.java"], "com.util.CollectionUtilitiesTest",
-        []),
+    (
+        "collectionutilities",
+        ["test/java/com/util/CollectionUtilitiesTest.java"],
+        "com.util.CollectionUtilitiesTest",
+        [],
+    ),
     ("executable", ["test/java/com/functional/ExecutableTest.java"], "com.functional.ExecutableTest", []),
     ("tailcall", ["test/java/com/functional/TailCallTest.java"], "com.functional.TailCallTest", []),
     ("function", ["test/java/com/functional/FunctionTest.java"], "com.functional.FunctionTest", []),
@@ -24,4 +28,5 @@ TARGETS = [
     ("state", ["test/java/com/state/StateTest.java"], "com.state.StateTest", [":atm_simulator"]),
     ("fileio", ["test/java/com/io/ReadFile.java"], "com.io.ReadFile", [":person"]),
     ("io", ["test/java/com/io/IOTest.java"], "com.io.IOTest", []),
+    ("actor_pingpong", ["test/java/com/actor/pingpong/PingPong.java"], "com.actor.pingpong.PingPong", [":pingpong"]),
 ]

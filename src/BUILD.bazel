@@ -6,6 +6,11 @@ load(":targets.bzl", "TARGETS")
 java_library(
     name = "functional_java",
     srcs = [
+        "main/java/com/actor/AbstractActor.java",
+        "main/java/com/actor/Actor.java",
+        "main/java/com/actor/ActorContext.java",
+        "main/java/com/actor/DaemonThreadFactory.java",
+        "main/java/com/actor/MessageProcessor.java",
         "main/java/com/functional/Case.java",
         "main/java/com/functional/Effect.java",
         "main/java/com/functional/Executable.java",
@@ -108,6 +113,16 @@ java_test(
         ":functional_java",
         "@maven//:junit_junit",
     ],
+)
+
+java_library(
+    name = "pingpong",
+    srcs = [
+        "test/java/com/actor/pingpong/Player.java"
+    ],
+    deps = [
+        ":functional_java",
+    ]
 )
 
 [
