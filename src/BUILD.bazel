@@ -118,11 +118,24 @@ java_test(
 java_library(
     name = "pingpong",
     srcs = [
-        "test/java/com/actor/pingpong/Player.java"
+        "test/java/com/actor/pingpong/Player.java",
     ],
+    visibility = ["//visibility:private"],
     deps = [
         ":functional_java",
-    ]
+    ],
+)
+
+java_library(
+    name = "fibonacci",
+    srcs = [
+        "test/java/com/actor/fibonacci/Worker.java",
+        "test/java/com/actor/fibonacci/Manager.java",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":functional_java",
+    ],
 )
 
 [

@@ -64,6 +64,13 @@ public abstract class List<A> {
     public abstract List<A> tail();
 
     /**
+     * Returns the tail(or rest) of the list wrapped in a Result context.
+     * @return the result element containing the remaining elements of the list if
+     * the list is not empty, otherwise an empty result object is returned.
+     */
+    public abstract Result<List<A>> tailOption();
+
+    /**
      * @return true if the list is empty or false otherwise.
      */
     public abstract boolean isEmpty();
@@ -439,6 +446,44 @@ public abstract class List<A> {
     }
 
     /**
+     * This function is same as traverse, but implemented using a while loop, instead
+     * of foldRight, which will avoid StackOverflow error for huge lists.
+     * @param list
+     * @param f
+     * @param <T>
+     * @param <U>
+     * @return
+     */
+    public static <T, U> Result<List<U>> sequence(List<T> list, Function<T, Result<U>> f) {
+        List<U> result = list();
+        List<T> workList = list.reverse();
+        while(!workList.isEmpty()) {
+            Result<U> ru = f.apply(workList.head());
+            if (ru.isSuccess()) {
+                result = result.cons(ru.successValue());
+            } else {
+                return Result.failure(ru.failureValue());
+            }
+            workList = workList.tail();
+        }
+        return Result.success(result);
+    }
+
+    /**
+     * Convenience method to do the sequence on this object.
+     * @param f
+     * @param <B>
+     * @return
+     */
+    public <B> Result<List<B>> sequence(Function<A, Result<B>> f) {
+        return sequence(this, f);
+    }
+
+    public static <U> Supplier<List<U>> lazySequence(final List<Supplier<U>> list) {
+        return () -> list.map(Supplier::get);
+    }
+
+    /**
      * This is a more generic function,that applies a function to each element of the
      * list producing a result object. Finally, this method transforms the list of result
      * objects into a result of list objects.
@@ -492,6 +537,37 @@ public abstract class List<A> {
      */
     public static <A, B> List<Tuple<A, B>> zip(List<A> as, List<B> bs) {
         return zipWith(as, bs, a -> b -> Tuple.create(a, b));
+    }
+
+    /**
+     * This function combines the elements of the provided list with this list.
+     * This function is similar to the zip static function, but provided as a
+     * convenience method function.
+     * @param that : The list of elements of type B.
+     * @param <B> : Type parameter of elements in the second list.
+     * @return the list of elements of Tuple.
+     */
+    public <B> List<Tuple<A, B>> zip(List<B> that) {
+        return zip(this, that);
+    }
+
+    /**
+     * This utility function creates a new list with the index of the element as
+     * the second element in the tuple, which can be useful in certain applications
+     * which rely on the index of the element held in the list.
+     * @return The result object holding the list of tuples.
+     */
+    public Result<List<Tuple<A, Integer>>> zipWithPositionResult() {
+        return Result.success(zip(iterate(0, x -> x + 1, length())));
+    }
+
+    /**
+     * This function is same as zipWithPositionResult, but without the Result
+     * context encapsulating the list.
+     * @return The list of tuples.
+     */
+    public List<Tuple<A, Integer>> zipWithPosition() {
+        return zipWithPositionResult().getOrElse(list());
     }
 
     /**
@@ -826,6 +902,50 @@ public abstract class List<A> {
      */
     public abstract void forEach(Effect<A> ef);
 
+    public List<A> takeAtMost(int n) {
+        class TakeHelper {
+            TailCall<List<A>> go (List<A> acc, List<A> unseenList, int n) {
+                return unseenList.isEmpty() || n <= 0
+                        ? ret(acc)
+                        : sus(() -> go(acc.cons(unseenList.head()), unseenList.tail(), n - 1));
+            }
+        }
+
+        return new TakeHelper().go(list(), this, n).eval().reverse();
+
+        //TODO: Fix the compiler error, to make the implementation functional.
+        //For some reason, the below code is errored by the compiler.
+//        Function<Tuple<List<A>, Integer>, Function<A, Boolean>> p = t -> a -> t._2 < n;
+//        var res = foldLeft(Tuple.create(List.<A>list(), 0),
+//                p, acc -> v -> Tuple.create(acc._1.cons(v), acc._2 + 1));
+//
+//        return res._1._1.reverse();
+    }
+
+    /**
+     * This function retrieves the first set of elements from the list, for which
+     * the given predicate returns true. The moment the predicate returns false
+     * for a value, further processing of the list is stopped.
+     * @param f : The predicate to be applied to each element of the list.
+     * @return The elements which satisfy the predicate.
+     */
+    public List<A> takeWhile(Function<A, Boolean> f) {
+        class TakeHelper {
+            TailCall<List<A>> go(List<A> acc, List<A> unseenList) {
+                return  unseenList.isEmpty() || !f.apply(head())
+                        ? ret(acc)
+                        : sus(() -> go(acc.cons(unseenList.head()), unseenList.tail()));
+            }
+        }
+        var res = new TakeHelper().go(list(), this).eval();
+        return res.reverse();
+
+        //TODO: Fix the compiler error, to make the implementation functional.
+        //For some reason, this is not being accepted by the compiler.
+//        var res = foldLeft(List.<A>list(), ls -> a -> f.apply(a), acc -> v -> acc.cons(v));
+//
+//        return res._1.reverse();
+    }
 
     private static class Nil<A> extends List<A> {
         private Nil() {}
@@ -838,6 +958,11 @@ public abstract class List<A> {
         @Override
         public List<A> tail() {
             throw new IllegalStateException("tail called on empty list");
+        }
+
+        @Override
+        public Result<List<A>> tailOption() {
+            return Result.empty();
         }
 
         @Override
@@ -876,6 +1001,11 @@ public abstract class List<A> {
 
         @Override
         public List<A> tail() { return tail; }
+
+        @Override
+        public Result<List<A>> tailOption() {
+            return Result.success(tail);
+        }
 
         @Override
         public boolean isEmpty() { return false; }
@@ -919,7 +1049,6 @@ public abstract class List<A> {
      * To solve this problem, we use a singleton empty list with no parameter
      * type. This generates a compiler warning. In order to restrict this
      * warning to the List class and not let it leak to the List users, you
-     *
      * don't give direct access to the singleton. That's why there's a (parameterized)
      * static method to access the singleton, and a @SuppressWarnings("rawtypes")
      * on the NIL property, as well as @SuppressWarnings("unchecked") on the

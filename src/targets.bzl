@@ -29,4 +29,6 @@ TARGETS = [
     ("fileio", ["test/java/com/io/ReadFile.java"], "com.io.ReadFile", [":person"]),
     ("io", ["test/java/com/io/IOTest.java"], "com.io.IOTest", []),
     ("actor_pingpong", ["test/java/com/actor/pingpong/PingPong.java"], "com.actor.pingpong.PingPong", [":pingpong"]),
+    ("actor_fibonacci", ["test/java/com/actor/fibonacci/Fibonacci.java"], "com.actor.fibonacci.Fibonacci",
+        [":fibonacci"])
 ]

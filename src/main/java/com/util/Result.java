@@ -185,6 +185,10 @@ public abstract class Result<T> implements Serializable {
 
     public abstract boolean isFailure();
 
+    public abstract T successValue();
+
+    public abstract Exception failureValue();
+
     /**
      * This method returns a failure instance holding the message provided.
      * @param message : Error message describing the condition.
@@ -381,6 +385,16 @@ public abstract class Result<T> implements Serializable {
 
             return empty();
         }
+
+        @Override
+        public T successValue() {
+            return value;
+        }
+
+        @Override
+        public Exception failureValue() {
+            throw new IllegalStateException("Method failureValue() called on a Success instance");
+        }
     }
 
     private static class Failure<T> extends Empty<T> {
@@ -455,6 +469,16 @@ public abstract class Result<T> implements Serializable {
         @Override
         public Result<String> forEachOrFail(Effect<T> ef) {
             return success(error.getMessage());
+        }
+
+        @Override
+        public T successValue() {
+            throw new IllegalStateException("Method successValue() called on a Failure instance");
+        }
+
+        @Override
+        public RuntimeException failureValue() {
+            return error;
         }
     }
 
@@ -531,6 +555,16 @@ public abstract class Result<T> implements Serializable {
         @Override
         public Result<String> forEachOrFail(Effect<T> ef) {
             return empty();
+        }
+
+        @Override
+        public T successValue() {
+            throw new IllegalStateException("Method successValue() called on an Empty instance");
+        }
+
+        @Override
+        public Exception failureValue() {
+            throw new IllegalStateException("Method failureValue() called on an Empty instance");
         }
     }
 }
