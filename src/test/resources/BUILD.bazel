@@ -6,3 +6,11 @@ filegroup(
 #    visibility = ["//src:__pkg__"],
     visibility = ["//visibility:public"]
 )
+
+filegroup(
+    name = "sample_properties",
+    srcs = [
+        "sample.properties"
+    ],
+    visibility = ["//visibility:public"]
+)

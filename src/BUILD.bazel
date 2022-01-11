@@ -49,7 +49,8 @@ java_library(
         "main/java/com/util/RBTree.java",
         "main/java/com/util/Result.java",
         "main/java/com/util/Tree.java",
-        "main/java/com/assertion/Assertion.java"
+        "main/java/com/assertion/Assertion.java",
+        "main/java/com/prop/PropertyReader.java",
     ],
 )
 
@@ -151,6 +152,7 @@ java_library(
             ":functional_java",
             "@maven//:junit_junit",
         ] + dependencies,
+        resources = ["//src/test/resources:sample_properties"]
     )
-    for name, files, clas, dependencies in TARGETS
+    for name, files, clas, dependencies, _ in TARGETS
 ]

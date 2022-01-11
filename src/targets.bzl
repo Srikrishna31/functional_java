@@ -4,6 +4,7 @@
 # 2. List of files to build including the test class (should start with test/java/com/
 # 3. Package path to the Test class
 # 4. Additional dependencies to be included.
+# 5. Resource targets
 TARGETS = [
     #TODO: Figure out a way to initialize dependencies variable if the list is not empty
     ("case", ["test/java/com/functional/CaseTest.java"], "com.functional.CaseTest", []),
@@ -30,5 +31,6 @@ TARGETS = [
     ("io", ["test/java/com/io/IOTest.java"], "com.io.IOTest", []),
     ("actor_pingpong", ["test/java/com/actor/pingpong/PingPong.java"], "com.actor.pingpong.PingPong", [":pingpong"]),
     ("actor_fibonacci", ["test/java/com/actor/fibonacci/Fibonacci.java"], "com.actor.fibonacci.Fibonacci",
-        [":fibonacci"])
+        [":fibonacci"]),
+        ("props", ["test/java/com/prop/PropertyReaderTest.java"], "com.prop.PropertyReaderTest", []),
 ]
