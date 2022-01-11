@@ -13,7 +13,7 @@ public class PropertyReader {
     }
 
     private Result<Properties> readProperties(String configFileName) {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(configFileName)) {
+        try (InputStream inputStream = getClass().getResourceAsStream(configFileName)) {
             var properties = new Properties();
             properties.load(inputStream);
             return Result.of(properties);

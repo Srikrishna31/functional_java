@@ -7,5 +7,5 @@ alias(
 
 test_suite(
     name = "test_functional_java",
-    tests = ["//src:test_" + name for name, _, _, _ in TARGETS],
+    tests = ["//src:test_" + name for name, _, _, _, _ in TARGETS],
 )

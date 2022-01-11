@@ -11,6 +11,7 @@ java_library(
         "main/java/com/actor/ActorContext.java",
         "main/java/com/actor/DaemonThreadFactory.java",
         "main/java/com/actor/MessageProcessor.java",
+        "main/java/com/assertion/Assertion.java",
         "main/java/com/functional/Case.java",
         "main/java/com/functional/Effect.java",
         "main/java/com/functional/Executable.java",
@@ -31,6 +32,7 @@ java_library(
         "main/java/com/io/Input.java",
         "main/java/com/lazy/Stream.java",
         "main/java/com/misc/MemoryMonitor.java",
+        "main/java/com/prop/PropertyReader.java",
         "main/java/com/state/Condition.java",
         "main/java/com/state/Generator.java",
         "main/java/com/state/JavaRNG.java",
@@ -49,8 +51,6 @@ java_library(
         "main/java/com/util/RBTree.java",
         "main/java/com/util/Result.java",
         "main/java/com/util/Tree.java",
-        "main/java/com/assertion/Assertion.java",
-        "main/java/com/prop/PropertyReader.java",
     ],
 )
 
@@ -131,8 +131,8 @@ java_library(
 java_library(
     name = "fibonacci",
     srcs = [
-        "test/java/com/actor/fibonacci/Worker.java",
         "test/java/com/actor/fibonacci/Manager.java",
+        "test/java/com/actor/fibonacci/Worker.java",
     ],
     visibility = ["//visibility:private"],
     deps = [
@@ -144,6 +144,7 @@ java_library(
     java_test(
         name = "test_" + name,
         srcs = files,
+        resources = res,
         test_class = clas,
         visibility = [
             "//visibility:private",
@@ -152,7 +153,6 @@ java_library(
             ":functional_java",
             "@maven//:junit_junit",
         ] + dependencies,
-        resources = ["//src/test/resources:sample_properties"]
     )
-    for name, files, clas, dependencies, _ in TARGETS
+    for name, files, clas, dependencies, res in TARGETS
 ]
