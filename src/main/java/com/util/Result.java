@@ -203,6 +203,10 @@ public abstract class Result<T> implements Serializable {
         return new Failure<>(e);
     }
 
+    public static <T> Result<T> failure(String message, Exception e) {
+        return new Failure<>(new IllegalStateException(message, e));
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> Result<T> empty() {
         return empty;

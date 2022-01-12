@@ -13,6 +13,7 @@ import static com.util.Result.failure;
 import static com.functional.TailCall.sus;
 import static com.functional.TailCall.ret;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -395,10 +396,22 @@ public abstract class List<A> {
         var list = List.<T>list();
 
         for(final T t : ct) {
-            list.cons(t);
+            list = list.cons(t);
         }
 
         return list.reverse();
+    }
+
+    /**
+     * A convenience function to create a list from a string which can contain
+     * comma(or any other separator) seperated values.
+     * @param string : The string which needs to be converted to list.
+     * @param separator : The separator which delimits two values in the list.
+     * @return the list of strings, which are obtained after splitting the string
+     * with the given separator.
+     */
+    public static List<String> fromSeperatedString(String string, char separator) {
+        return fromCollection(Arrays.asList(string.split("\\s*" + separator + "\\s*")));
     }
 
     /**

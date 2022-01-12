@@ -1,6 +1,6 @@
 package com.io;
 
-class Person {
+public class Person {
     private static final String FORMAT =
             "ID: %s, First name: %s, Last name: %s";
     public final int id;
@@ -36,4 +36,6 @@ class Person {
     public int hashCode() {
         return firstName.hashCode();
     }
+
+
 }

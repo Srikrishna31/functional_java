@@ -54,5 +54,15 @@ TARGETS = [
         [],
         [],
     ),
-    ("props", ["test/java/com/prop/PropertyReaderTest.java"], "com.prop.PropertyReaderTest", [], ["//src/test/resources:sample_properties"]),
+    (
+        "props",
+        [
+            "test/java/com/prop/PropertyReaderTest.java",
+            "test/java/com/io/Person.java",
+            "test/java/com/prop/PersonReader.java",
+        ],
+        "com.prop.PropertyReaderTest",
+        [],
+        ["//src/test/resources:sample_properties"],
+    ),
 ]
