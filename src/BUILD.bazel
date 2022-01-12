@@ -69,27 +69,15 @@ java_library(
     ],
 )
 
-java_library(
-    name = "person",
-    srcs = [
-        "test/java/com/io/Person.java",
-    ],
-    resources = [
-        "//src/test/resources:persons_io",
-    ],
-    visibility = [
-        "//visibility:private",
-    ],
-    deps = [
-        ":functional_java",
-    ],
-)
-
 java_test(
     name = "console_io",
     srcs = [
+        "test/java/com/io/Person.java",
         "test/java/com/io/ReadConsole.java",
         "test/java/com/io/TestReader.java",
+    ],
+    resources = [
+        "//src/test/resources:persons_io",
     ],
     test_class = "com.io.TestReader",
     visibility = [
@@ -97,7 +85,6 @@ java_test(
     ],
     deps = [
         ":functional_java",
-        ":person",
         "@maven//:junit_junit",
     ],
 )
@@ -114,29 +101,6 @@ java_test(
     deps = [
         ":functional_java",
         "@maven//:junit_junit",
-    ],
-)
-
-java_library(
-    name = "pingpong",
-    srcs = [
-        "test/java/com/actor/pingpong/Player.java",
-    ],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":functional_java",
-    ],
-)
-
-java_library(
-    name = "fibonacci",
-    srcs = [
-        "test/java/com/actor/fibonacci/Manager.java",
-        "test/java/com/actor/fibonacci/Worker.java",
-    ],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":functional_java",
     ],
 )
 
